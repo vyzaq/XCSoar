@@ -50,6 +50,20 @@ LX_SOURCES = \
 	$(DRIVER_SRC_DIR)/LX/LXN.cpp \
 	$(DRIVER_SRC_DIR)/LX/Register.cpp
 
+LXNAVIGATION_SOURCES = \
+        $(DRIVER_SRC_DIR)/LXNavigation/Register.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNavigationDevice.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP2.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/GPRMB.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/PFLX0.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/PFLX2.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP3.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP1.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP0.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv2/LXBC.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv2/LXDT.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/StateMachine.cpp
+
 FLARM_SOURCES = \
 	$(DRIVER_SRC_DIR)/FLARM/Device.cpp \
 	$(DRIVER_SRC_DIR)/FLARM/Register.cpp \
@@ -95,6 +109,7 @@ DRIVER_SOURCES = \
 	$(CAI302_SOURCES) \
 	$(IMI_SOURCES) \
 	$(LX_SOURCES) \
+        $(LXNAVIGATION_SOURCES) \
 	$(FLARM_SOURCES) \
 	$(FLYTEC_SOURCES) \
 	$(VEGA_SOURCES) \
