@@ -49,6 +49,7 @@
 #include "Device/Driver/Westerboer.hpp"
 #include "Device/Driver/XCTracer.hpp"
 #include "Device/Driver/Zander.hpp"
+#include "Device/Driver/LXNavigation.hpp"
 #include "Device/Driver.hpp"
 #include "Device/RecordedFlight.hpp"
 #include "Device/Parser.hpp"
@@ -1532,6 +1533,84 @@ TestACD()
 }
 
 static void
+TestLXNavigation()
+{
+  NullPort null_port;
+  Device *device = lx_navigation_driver.CreateOnPort(dummy_config, null_port);
+  ok1(device != nullptr);
+
+  NMEAInfo nmea_info;
+  nmea_info.Reset();
+  nmea_info.clock = 1;
+
+  /* empty sentence */
+  ok1(device->ParseNMEA("$LXWP0,N,,,,,,,,,,,*6d", nmea_info));
+  ok1(!nmea_info.pressure_altitude_available);
+  ok1(!nmea_info.baro_altitude_available);
+  ok1(!nmea_info.airspeed_available);
+  ok1(!nmea_info.total_energy_vario_available);
+  ok1(!nmea_info.external_wind_available);
+
+
+  nmea_info.Reset();
+  nmea_info.clock = 1;
+
+  //LXWP0
+  ok1(device->ParseNMEA("$LXWP0,Y,119.4,1717.6,0.02,0.03,0.04,0.05,0.06,0.07,25,219,107.2*5b", nmea_info));
+
+  ok1(nmea_info.pressure_altitude_available);
+  ok1(!nmea_info.baro_altitude_available);
+  ok1(equals(nmea_info.pressure_altitude, 1717.6));
+
+  ok1(nmea_info.airspeed_available);
+  ok1(equals(nmea_info.true_airspeed, Units::ToSysUnit(119.4, Unit::KILOMETER_PER_HOUR)));
+
+  ok1(nmea_info.total_energy_vario_available);
+  ok1(equals(nmea_info.total_energy_vario, 0.02));
+
+  ok1(nmea_info.heading_available);
+  ok1(equals(nmea_info.heading, Angle::Degrees(25)));
+
+  ok1(nmea_info.external_wind_available);
+  ok1(equals(nmea_info.external_wind.norm, Units::ToSysUnit(107.2, Unit::KILOMETER_PER_HOUR)));
+  ok1(equals(nmea_info.external_wind.bearing, 219));
+
+  nmea_info.Reset();
+  nmea_info.clock = 1;
+
+  //LXWP1
+  ok1(device->ParseNMEA(" $LXWP1,LX Eos,34949,1.5,1.4*7d", nmea_info));
+  ok1(nmea_info.device.product == "LX Eos");
+  ok1(nmea_info.device.serial == "34949");
+  ok1(nmea_info.device.software_version == "1.5");
+  ok1(nmea_info.device.hardware_version == "1.4");
+
+  nmea_info.Reset();
+  nmea_info.clock = 1;
+
+  //LXWP2
+  ok1(device->ParseNMEA("$LXWP2,1.5,1.11,13,2.96,-3.03,1.35,45*02", nmea_info));
+  ok1(nmea_info.settings.mac_cready_available);
+  ok1(equals(nmea_info.settings.mac_cready, 1.5));
+  ok1(nmea_info.settings.ballast_overload_available);
+  ok1(equals(nmea_info.settings.ballast_overload, 1.11));
+  ok1(nmea_info.settings.bugs_available);
+  ok1(equals(nmea_info.settings.bugs, 0.13));
+  ok1(nmea_info.settings.volume_available);
+  ok1(equals(nmea_info.settings.volume, 45));
+
+  nmea_info.Reset();
+  nmea_info.clock = 1;
+
+  //LXWP3
+  ok1(device->ParseNMEA("$LXWP3,47.76,0,2.0,5.0,15,30,2.5,1.0,0,100,0.1,,0*08", nmea_info));
+  ok1(nmea_info.settings.qnh_available);
+  ok1(equals(nmea_info.settings.qnh.GetHectoPascal(), 1015)); //update - originally -  Difference between true and standard altitude in feet
+
+  delete device;
+}
+
+static void
 TestDeclare(const struct DeviceRegister &driver)
 {
   NullDataHandler handler;
@@ -1629,6 +1708,7 @@ int main(int argc, char **argv)
   TestVaulter();
   TestXCTracer();
   TestACD();
+  TestLXNavigation();
 
   /* XXX the Triadis drivers have too many dependencies, not enabling
      for now */
@@ -1640,6 +1720,7 @@ int main(int argc, char **argv)
   TestDeclare(lx_driver);
   TestDeclare(imi_driver);
   TestDeclare(flarm_driver);
+  TestDeclare(lx_navigation_driver);
   //TestDeclare(vega_driver);
 
   /* XXX Volkslogger doesn't do well with this test case */
@@ -1648,6 +1729,7 @@ int main(int argc, char **argv)
   TestFlightList(cai302_driver);
   TestFlightList(lx_driver);
   TestFlightList(imi_driver);
+  TestFlightList(lx_navigation_driver);
 
   return exit_status();
 }
