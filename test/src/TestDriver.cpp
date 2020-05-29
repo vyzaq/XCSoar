@@ -50,7 +50,7 @@
 #include "Device/Driver/XCTracer.hpp"
 #include "Device/Driver/Zander.hpp"
 #include "Device/Driver/LXNavigation.hpp"
-#include "Device/Driver/LXNavigation/Internals/LXNMEAv1/PFLX2.hpp"
+#include "Device/Driver/LXNavigation/Internals/NMEAv1Protocol.hpp"
 #include "Device/Driver.hpp"
 #include "Device/RecordedFlight.hpp"
 #include "Device/Parser.hpp"

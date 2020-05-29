@@ -31,12 +31,32 @@ Copyright_License {
 
 namespace LXNavigation
 {
+enum class Sentences
+{
+  LXWP0,
+  LXWP1,
+  LXWP2,
+  LXWP3,
+  LXDT
+};
+
+struct BasicFlightInfo
+{
+  bool is_logger_running;
+  float tas;
+  float altitude;
+  float vario6;
+  u_int16_t heading;
+  float wind_direction;
+  float wind_speed;
+};
 
 enum class Status
 {
   Ok,
   Error
 };
+
 struct StatusResult
 {
   Status status;

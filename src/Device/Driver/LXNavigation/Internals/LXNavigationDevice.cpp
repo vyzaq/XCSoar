@@ -22,70 +22,146 @@ Copyright_License {
 */
 
 #include "LXNavigationDevice.hpp"
+
+#include "NMEAv2Protocol.hpp"
+#include "NMEAv1Protocol.hpp"
+
 #include "Device/Port/Port.hpp"
+#include "Device/Util/NMEAWriter.hpp"
 #include "Operation/Operation.hpp"
 #include "NMEA/Checksum.hpp"
 #include "NMEA/InputLine.hpp"
 #include "NMEA/Info.hpp"
-
 #include <OS/Path.hpp>
+
+#include <utility>
 
 namespace LXNavigation
 {
+namespace
+{
+bool IsDeviceSupported(const DeviceInfo& device)
+{
+  if(device.name == "LX Eos 57")
+  {
+    return !(device.sw_version < 1.9);
+  }
+  else if(device.name == "LX Eos 80")
+  {
+    return !(device.sw_version < 1.5);
+  }
+  else if(device.name == "LX Era")
+  {
+    return !(device.sw_version < 1.5);
+  }
+  else if(device.name == "LX Colibri X")
+  {
+    return !(device.sw_version < 1.5);
+  }
+  else if(device.name == "LX Zeus")
+  {
+    return !(device.sw_version < 5);
+  }
+  return false;
+}
+}
+
+LXNavigationDevice::LXNavigationDevice(Port &communication_port, unsigned baud_rate, unsigned bulk_baud_rate)
+    : port(communication_port)
+    , device_bulk_baud_rate(bulk_baud_rate)
+    , device_baud_rate(baud_rate)
+    , state(State::UNKNOWN) {}
 
 void
 LXNavigationDevice::LinkTimeout()
 {
-  busy = false;
-  std::lock_guard<Mutex> lock(mutex);
-  device_baud_rate = 0;
 }
 
 bool
 LXNavigationDevice::EnableNMEA(OperationEnvironment &env)
 {
-  unsigned cached_device_baud_rate;
-
-  {
-    std::lock_guard<Mutex> lock(mutex);
-
-    cached_device_baud_rate = device_baud_rate;
-    device_baud_rate = 0;
-    busy = false;
-  }
-
-  if (cached_device_baud_rate != 0)
-    port.SetBaudrate(cached_device_baud_rate);
-
+  state = State::DEVICE_INIT;
+  port.SetBaudrate(device_baud_rate);
   port.Flush();
-
+  NMEAv1::PFLX0Request request;
+  request.emplace_back(NMEAv1::FLIGHT_DATA_PARAMETERS, 1);
+  request.emplace_back(NMEAv1::BASIC_GLIDE_INFO_PARAMETERS, 10);
+  request.emplace_back(NMEAv1::BASIC_DEVICE_INFO, 60);
+  request.emplace_back(NMEAv1::ADVANCED_GLIDE_INFO_PARAMETERS, NMEAv1::PFLX0_DISABLED);
+  {
+    const std::lock_guard<Mutex> lock(mutex);
+    PortWriteNMEA(port, NMEAv1::GeneratePFLX0(request), env); //quering device info to get logged - debug only
+    PortWriteNMEA(port, NMEAv2::GenerateLXDT_INFO_GET(), env); //quering device info to get logged - debug only
+    state = State::PROCESSING_NMEA;
+  }
   return true;
 }
 
 bool
-LXNavigationDevice::ParseNMEA(const char *String, NMEAInfo &info)
+LXNavigationDevice::ParseNMEA(const char *string, NMEAInfo &info)
 {
-  if (!VerifyNMEAChecksum(String))
+  if (!VerifyNMEAChecksum(string))
     return false;
+
+  NMEAInputLine nmea_line(string);
+  switch (state) {
+  case State::PROCESSING_NMEA:
+  {
+    if(NMEAv1::IsLineMatch(nmea_line, Sentences::LXWP1) ||
+       NMEAv2::IsLineMatch(nmea_line, Sentences::LXDT, NMEAv2::SentenceAction::INFO, NMEAv2::SentenceCode::ANS))
+    {
+      DeviceInfo device_info{};
+      if(NMEAv1::IsLineMatch(nmea_line, Sentences::LXWP1))
+        device_info = NMEAv1::ParseLXWP1(nmea_line);
+      else
+        device_info = NMEAv2::ParseLXDT_INFO_ANS(nmea_line);
+      if(!IsDeviceSupported(device_info)) {
+        state = State::NOT_SUPPORTED;
+        return true;
+      }
+    }
+    else if(NMEAv1::IsLineMatch(nmea_line, Sentences::LXWP0))
+    {
+      NMEAv1::ParseLXWP0(nmea_line, info);
+      return true;
+    }
+    else if(NMEAv1::IsLineMatch(nmea_line, Sentences::LXWP2))
+    {
+      NMEAv1::ParseLXWP2(nmea_line, info);
+      return true;
+    }
+    else if(NMEAv1::IsLineMatch(nmea_line, Sentences::LXWP3))
+    {
+      NMEAv1::ParseLXWP3(nmea_line, info);
+      return true;
+    }
+    return true;
+  }
+  default:
+    break;
+  }
   return false;
 }
 
 bool
 LXNavigationDevice::PutBallast(double fraction, double overload, OperationEnvironment &env)
 {
-  return false;
+  PortWriteNMEA(port, NMEAv1::GeneratePFLX2ForBallast(fraction, overload), env);
+  return true;
 }
 
 bool
 LXNavigationDevice::PutBugs(double bugs, OperationEnvironment &env)
 {
-  return false;
+  PortWriteNMEA(port, NMEAv1::GeneratePFLX2ForBugs(bugs), env);
+  return true;
 }
 
 bool
 LXNavigationDevice::PutMacCready(double mc, OperationEnvironment &env)
 {
-  return false;
+  PortWriteNMEA(port, NMEAv1::GeneratePFLX2ForMcReady(mc), env);
+  return true;
 }
 
 bool
@@ -97,19 +173,26 @@ LXNavigationDevice::PutQNH(const AtmosphericPressure &pres, OperationEnvironment
 bool
 LXNavigationDevice::PutVolume(unsigned volume, OperationEnvironment &env)
 {
-  return false;
+  PortWriteNMEA(port, NMEAv1::GeneratePFLX2ForVolume(volume), env);
+  return true;
 }
 
 bool
 LXNavigationDevice::PutActiveFrequency(RadioFrequency frequency, const TCHAR *name, OperationEnvironment &env)
 {
-  return false;
+  RadioParameters parameters{};
+  parameters.active_freq = static_cast<float>(frequency.GetKiloHertz()) / 1000;
+  PortWriteNMEA(port, NMEAv2::GenerateLXDT_RADIO_SET(parameters), env);
+  return true;
 }
 
 bool
 LXNavigationDevice::PutStandbyFrequency(RadioFrequency frequency, const TCHAR *name, OperationEnvironment &env)
 {
-  return false;
+  RadioParameters parameters{};
+  parameters.standby_freq = static_cast<float>(frequency.GetKiloHertz()) / 1000;
+  PortWriteNMEA(port, NMEAv2::GenerateLXDT_RADIO_SET(parameters), env);
+  return true;
 }
 
 bool
@@ -134,8 +217,4 @@ LXNavigationDevice::DownloadFlight(const RecordedFlightInfo &flight, Path path, 
 {
   return false;
 }
-
-LXNavigationDevice::LXNavigationDevice(Port &_port, unsigned baud_rate, unsigned bulk_baud_rate)
-    : port(_port), device_bulk_baud_rate(bulk_baud_rate), device_baud_rate(baud_rate),
-      busy(false) {}
 }

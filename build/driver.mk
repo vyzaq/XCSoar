@@ -51,18 +51,10 @@ LX_SOURCES = \
 	$(DRIVER_SRC_DIR)/LX/Register.cpp
 
 LXNAVIGATION_SOURCES = \
-        $(DRIVER_SRC_DIR)/LXNavigation/Register.cpp \
-        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNavigationDevice.cpp \
-        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP2.cpp \
-        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/GPRMB.cpp \
-        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/PFLX0.cpp \
-        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/PFLX2.cpp \
-        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP3.cpp \
-        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP1.cpp \
-        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP0.cpp \
-        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv2/LXBC.cpp \
-        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv2/LXDT.cpp \
-        $(DRIVER_SRC_DIR)/LXNavigation/Internals/StateMachine.cpp
+  $(DRIVER_SRC_DIR)/LXNavigation/Register.cpp \
+  $(DRIVER_SRC_DIR)/LXNavigation/Internals/NMEAv1Protocol.cpp \
+  $(DRIVER_SRC_DIR)/LXNavigation/Internals/NMEAv2Protocol.cpp \
+  $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNavigationDevice.cpp
 
 FLARM_SOURCES = \
 	$(DRIVER_SRC_DIR)/FLARM/Device.cpp \
