@@ -23,4 +23,18 @@ Copyright_License {
 
 #ifndef XCSOAR_DEVICE_DRIVER_LXNAVIGATION_PFLX0_HPP
 #define XCSOAR_DEVICE_DRIVER_LXNAVIGATION_PFLX0_HPP
+
+#include "Util/StaticString.hxx"
+#include <vector>
+#include <utility>
+
+namespace LXNavigation
+{
+constexpr int PFLX0_ONCE = -1;
+constexpr int PFLX0_DISABLED = 0;
+using PFLX0Message = NarrowString<60>;
+using PFLX0Request = std::vector<std::pair<NarrowString<6>, int> >;
+PFLX0Message GeneratePFLX0(const PFLX0Request &request);
+}
+
 #endif

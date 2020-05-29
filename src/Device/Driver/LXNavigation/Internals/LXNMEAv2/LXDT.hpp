@@ -23,4 +23,56 @@ Copyright_License {
 
 #ifndef XCSOAR_DEVICE_DRIVER_LXNAVIGATION_LXDT_HPP
 #define XCSOAR_DEVICE_DRIVER_LXNAVIGATION_LXDT_HPP
+
+#include "Util/StaticString.hxx"
+#include "Device/Driver/LXNavigation/Internals/LXNavigationData.hpp"
+
+namespace LXNavigation
+{
+using LXDTMessage = NarrowString<60>;
+
+StatusResult ParseLXDT_ANS_Status(const char *line);
+
+LXDTMessage GenerateLXDT_INFO_GET();
+DeviceInfo ParseLXDT_INFO_ANS(const char *line);
+
+LXDTMessage GenerateLXDT_TP_GET(u_int16_t turnpoint_id);
+LXDTMessage GenerateLXDT_TP_SET(const TurnpointData& data);
+TurnpointData ParseLXDT_TP_ANS(const char *line);
+
+LXDTMessage GenerateLXDT_ZONE_GET(u_int16_t turnpoint_id);
+LXDTMessage GenerateLXDT_ZONE_SET(const TurnpointZone& data);
+TurnpointZone ParseLXDT_ZONE_ANS(const char *line);
+
+LXDTMessage GenerateLXDT_GLIDER_GET();
+LXDTMessage GenerateLXDT_GLIDER_SET(const GliderInfo& data);
+GliderInfo ParseLXDT_GLIDER_ANS(const char *line);
+
+LXDTMessage GenerateLXDT_PILOT_GET();
+LXDTMessage GenerateLXDT_PILOT_SET(const PilotInfo& data);
+PilotInfo ParseLXDT_PILOT_ANS(const char *line);
+
+LXDTMessage GenerateLXDT_TSK_PAR_GET();
+LXDTMessage GenerateLXDT_TSK_PAR_SET(const TaskParameters& data);
+TaskParameters ParseLXDT_TSK_PAR_ANS(const char *line);
+
+LXDTMessage GenerateLXDT_MC_BAL_GET();
+LXDTMessage GenerateLXDT_MC_BAL_SET(const std::pair<GlideParameters, DeviceParameters>& data);
+std::pair<GlideParameters, DeviceParameters> ParseLXDT_MC_BAL_ANS(const char *line);
+
+LXDTMessage GenerateLXDT_RADIO_GET();
+LXDTMessage GenerateLXDT_RADIO_SET(const RadioParameters& data);
+RadioParameters ParseLXDT_RADIO_ANS(const char *line);
+
+LXDTMessage GenerateLXDT_FLIGHTS_NO_GET();
+int16_t ParseLXDT_FLIGHTS_NO_ANS(const char *line);
+
+LXDTMessage GenerateLXDT_FLIGHT_INFO_GET(u_int16_t turnpoint_id);
+FlightInfo ParseLXDT_FLIGHT_INFO_ANS(const char *line);
+
+LXDTMessage GenerateLXDT_R_SWITCH_TOGGLE();
+LXDTMessage GenerateLXDT_R_DUAL_SET(bool is_dual_enabled);
+LXDTMessage GenerateLXDT_R_SPACING_SET(bool is_833);
+
+}
 #endif

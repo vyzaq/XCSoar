@@ -23,5 +23,17 @@ Copyright_License {
 
 #ifndef XCSOAR_DEVICE_DRIVER_LXNAVIGATION_PFLX2_HPP
 #define XCSOAR_DEVICE_DRIVER_LXNAVIGATION_PFLX2_HPP
+
+#include "Util/StaticString.hxx"
+
+namespace LXNavigation
+{
+using PFLX2Message = NarrowString<60>;
+PFLX2Message GeneratePFLX2ForMcReady(double mc);
+PFLX2Message GeneratePFLX2ForBugs(double bugs);
+PFLX2Message GeneratePFLX2ForVolume(unsigned volume);
+PFLX2Message GeneratePFLX2ForBallast(double fraction, double overload);
+}
+
 #endif
 

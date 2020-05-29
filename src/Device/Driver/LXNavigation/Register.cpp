@@ -32,7 +32,7 @@ LXNavigationCreateOnPort(const DeviceConfig &config, Port &com_port)
   const unsigned baud_rate = uses_speed ? config.baud_rate : 0;
   const unsigned bulk_baud_rate = uses_speed ? config.bulk_baud_rate : 0;
 
-  return new LXNavigationDevice(com_port, baud_rate, bulk_baud_rate);
+  return new LXNavigation::LXNavigationDevice(com_port, baud_rate, bulk_baud_rate);
 }
 
 const struct DeviceRegister lx_navigation_driver = {

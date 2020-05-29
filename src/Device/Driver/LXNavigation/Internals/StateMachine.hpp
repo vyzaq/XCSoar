@@ -24,4 +24,33 @@ Copyright_License {
 #ifndef XCSOAR_DEVICE_DRIVER_LXNAVIGATION_STATE_MACHINE_HPP
 #define XCSOAR_DEVICE_DRIVER_LXNAVIGATION_STATE_MACHINE_HPP
 
+namespace LXNavigation
+{
+class LXNavigationDevice;
+class DeviceStateMachine
+{
+public:
+  enum class State
+  {
+    UNKBOWN,
+    CONNECTION_INIT,
+    DEVICE_INIT,
+    APP_INIT,
+    PROCESSING_NMEA,
+    DOWNLOADING_FLIGHT,
+    SHUTDOWN
+  };
+
+  DeviceStateMachine(LXNavigationDevice* device);
+
+  State GetState() const;
+
+  void Start();
+  void Finish();
+
+private:
+  State state;
+};
+}
+
 #endif

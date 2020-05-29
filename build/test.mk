@@ -123,7 +123,8 @@ TEST_NAMES = \
 	TestIGCFilenameFormatter \
 	TestLXNToIGC \
 	TestLeastSquares \
-	TestThermalBand
+	TestThermalBand \
+        TestLXNavigationProtocol
 
 
 TESTS = $(call name-to-bin,$(TEST_NAMES))
@@ -1541,6 +1542,21 @@ LXN2IGC_SOURCES = \
 	$(SRC)/Device/Driver/LX/LXN.cpp \
 	$(TEST_SRC_DIR)/lxn2igc.cpp
 $(eval $(call link-program,lxn2igc,LXN2IGC))
+
+TEST_LXNAVIGATION_PROTOCOL_SOURCES = \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP2.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/GPRMB.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/PFLX0.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/PFLX2.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP3.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP1.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv1/LXWP0.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv2/LXBC.cpp \
+        $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNMEAv2/LXDT.cpp \
+	$(TEST_SRC_DIR)/tap.c \
+	$(TEST_SRC_DIR)/TestLXNavigationProtocol.cpp
+TEST_LXNAVIGATION_PROTOCOL_DEPENDS = DRIVER UTIL
+$(eval $(call link-program,TestLXNavigationProtocol,TEST_LXNAVIGATION_PROTOCOL))
 
 RUN_IGC_WRITER_SOURCES = \
 	$(DEBUG_REPLAY_SOURCES) \

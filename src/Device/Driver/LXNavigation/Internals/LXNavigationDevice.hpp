@@ -31,6 +31,8 @@ Copyright_License {
 #include <atomic>
 #include <cstdint>
 
+namespace LXNavigation
+{
 class LXNavigationDevice: public AbstractDevice
 {
   Port &port;
@@ -71,5 +73,6 @@ public:
                       Path path,
                       OperationEnvironment &env) override;
 };
+}
 
 #endif

@@ -30,6 +30,9 @@ Copyright_License {
 
 #include <OS/Path.hpp>
 
+namespace LXNavigation
+{
+
 void
 LXNavigationDevice::LinkTimeout()
 {
@@ -135,3 +138,4 @@ LXNavigationDevice::DownloadFlight(const RecordedFlightInfo &flight, Path path, 
 LXNavigationDevice::LXNavigationDevice(Port &_port, unsigned baud_rate, unsigned bulk_baud_rate)
     : port(_port), device_bulk_baud_rate(bulk_baud_rate), device_baud_rate(baud_rate),
       busy(false) {}
+}
