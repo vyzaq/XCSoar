@@ -24,6 +24,8 @@
 #include "Device/Driver/LXNavigation/Internals/NMEAv2Protocol.hpp"
 #include "TestUtil.hpp"
 #include "NMEA/InputLine.hpp"
+#include "NMEA/Info.hpp"
+#include "Units/System.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,6 +72,119 @@ TestPFLX2()
 }
 
 static void
+TestLXWP0()
+{
+  {
+    NMEAInfo info;
+    info.Reset();
+    info.clock = 1;
+    info.alive.Update(info.clock);
+
+    NMEAInputLine line("Y,119.4,1717.6,0.02,0.02,0.02,0.02,0.02,0.02,,022,107.2");
+    LXNavigation::NMEAv1::ParseLXWP0(line, info);
+    ok1(info.airspeed_available);
+    ok1(equals(info.true_airspeed, Units::ToSysUnit(119.4, Unit::KILOMETER_PER_HOUR)));
+    ok1(info.baro_altitude_available);
+    ok1(equals(info.baro_altitude, 1717.6));
+    ok1(info.total_energy_vario_available);
+    ok1(equals(info.total_energy_vario, 0.02));
+    ok1(info.external_wind_available);
+    ok1(info.external_wind.bearing == Angle::Degrees(22));
+    ok1(equals(info.external_wind.norm, Units::ToSysUnit(107.2, Unit::KILOMETER_PER_HOUR)));
+    ok1(!info.heading_available);
+  }
+  {
+    NMEAInfo info;
+    info.Reset();
+    info.clock = 1;
+    info.alive.Update(info.clock);
+
+    NMEAInputLine line("Y,,,,,,,,,212,,");
+    LXNavigation::NMEAv1::ParseLXWP0(line, info);
+    ok1(!info.airspeed_available);
+    ok1(!info.baro_altitude_available);
+    ok1(!info.total_energy_vario_available);
+    ok1(info.external_wind_available);
+    ok1(info.external_wind.bearing == Angle::Degrees(0));
+    ok1(equals(info.external_wind.norm, 0));
+    ok1(info.heading_available);
+    ok1(info.heading == Angle::Degrees(212));
+  }
+}
+
+static void
+TestLXWP1()
+{
+  NMEAInputLine line("LX Eos,34949,1.5,1.4");
+  auto device_info = LXNavigation::NMEAv1::ParseLXWP1(line);
+  ok1(device_info.name == "LX Eos");
+  ok1(device_info.serial == 34949);
+  ok1(equals(device_info.sw_version, 1.5));
+  ok1(equals(device_info.hw_version, 1.4));
+}
+
+static void
+TestLXWP2()
+{
+  {
+    NMEAInfo info;
+    info.Reset();
+    info.clock = 1;
+    info.alive.Update(info.clock);
+
+    NMEAInputLine line("1.5,1.11,13,2.96,-3.03,1.35,45");
+    LXNavigation::NMEAv1::ParseLXWP2(line, info);
+    ok1(info.settings.mac_cready_available);
+    ok1(equals(info.settings.mac_cready, 1.5));
+    ok1(info.settings.ballast_overload_available);
+    ok1(equals(info.settings.ballast_overload, 1.11));
+    ok1(info.settings.bugs_available);
+    ok1(equals(info.settings.bugs, 0.87));
+    ok1(info.settings.volume_available);
+    ok1(info.settings.volume == 45);
+  }
+  {
+    NMEAInfo info;
+    info.Reset();
+    info.clock = 1;
+    info.alive.Update(info.clock);
+
+    NMEAInputLine line(",,,,,,");
+    LXNavigation::NMEAv1::ParseLXWP2(line, info);
+    ok1(!info.settings.mac_cready_available);
+    ok1(!info.settings.ballast_overload_available);
+    ok1(!info.settings.bugs_available);
+    ok1(!info.settings.volume_available);
+  }
+}
+
+static void
+TestLXWP3()
+{
+  {
+    NMEAInfo info;
+    info.Reset();
+    info.clock = 1;
+    info.alive.Update(info.clock);
+
+    NMEAInputLine line("200,2,5.0,0,29,20,10.0,1.3,1,120,0,KA6e,0");
+    LXNavigation::NMEAv1::ParseLXWP3(line, info);
+    ok1(info.settings.qnh_available);
+    ok1(equals(info.settings.qnh.GetHectoPascal(), 990));
+  }
+  {
+    NMEAInfo info;
+    info.Reset();
+    info.clock = 1;
+    info.alive.Update(info.clock);
+
+    NMEAInputLine line(",2,5.0,0,29,20,10.0,1.3,1,120,0,KA6e,0");
+    LXNavigation::NMEAv1::ParseLXWP3(line, info);
+    ok1(!info.settings.qnh_available);
+  }
+}
+
+static void
 TestLXBC()
 {
 }
@@ -77,7 +192,7 @@ TestLXBC()
 static void
 TestLXDT_ANS_Status()
 {
-  ok1(LXNavigation::NMEAv2::ParseLXDT_ANS_Status("LXDT,ANS,OK").status == LXNavigation::Status::Ok);
+  ok1(LXNavigation::NMEAv2::ParseLXDT_ANS_Status("ANS,OK").status == LXNavigation::Status::Ok);
   {
     auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_ANS_Status("ANS,ERROR,Parameter count mismatch");
     ok1(parsing_result.status == LXNavigation::Status::Error);
@@ -88,7 +203,7 @@ TestLXDT_ANS_Status()
 static void
 TestLXDT_INFO()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_INFO_GET() == "GET,INFO");
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_INFO_GET() == "LXDT,GET,INFO");
   {
     auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_INFO_ANS("ANS,INFO,LX Era,34949,1.4,1.1,0-[0],00,Empty,Empty");
     ok1(parsing_result.name == "LX Era");
@@ -101,7 +216,7 @@ TestLXDT_INFO()
 static void
 TestLXDT_TP()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_TP_GET(2) == "GET,TP,2");
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_TP_GET(2) == "LXDT,GET,TP,2");
   {
     LXNavigation::TurnpointData turnpoint;
     turnpoint.id = 0;
@@ -111,7 +226,7 @@ TestLXDT_TP()
     ok1(LXNavigation::NMEAv2::GenerateLXDT_TP_SET(turnpoint) == "LXDT,SET,TP,0,5,2748617,906762,NOVO MESTO");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_TP_ANS("LXDT,ANS,TP,2,2,2748617,906762,NOVO MESTO ");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_TP_ANS("2,2,2748617,906762,NOVO MESTO ");
     ok1(parsing_result.id == 2);
     ok1(parsing_result.name == "NOVO MESTO ");
     ok1(parsing_result.location == GeoPoint(Angle::Degrees(45.810283), Angle::Degrees(15.1127)));
@@ -122,7 +237,7 @@ TestLXDT_TP()
 static void
 TestLXDT_ZONE()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_ZONE_GET(2) == "GET,ZONE,2");
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_ZONE_GET(2) == "LXDT,GET,ZONE,2");
   {
     LXNavigation::TurnpointZone zone;
     zone.id = 2;
@@ -135,10 +250,10 @@ TestLXDT_ZONE()
     zone.r1 = 5000;
     zone.r2 = 3500;
     zone.elevation = 174;
-    ok1(LXNavigation::NMEAv2::GenerateLXDT_ZONE_SET(zone) == "SET,ZONE,2,1,1,1,90,60,309,5000,3500,174");
+    ok1(LXNavigation::NMEAv2::GenerateLXDT_ZONE_SET(zone) == "LXDT,SET,ZONE,2,1,1,1,90,60,309,5000,3500,174");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_ZONE_ANS("LXDT,ANS,ZONE,2,3,0,1,90,60,309,5000,3500,174");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_ZONE_ANS("2,3,0,1,90,60,309,5000,3500,174");
     ok1(parsing_result.id == 2);
     ok1(parsing_result.direction == LXNavigation::Direction::ToPrevious);
     ok1(parsing_result.is_auto_next == false);
@@ -155,17 +270,17 @@ TestLXDT_ZONE()
 static void
 TestLXDT_GLIDER()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_GLIDER_GET() == "GET,GLIDER");
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_GLIDER_GET() == "LXDT,GET,GLIDER");
 
   {
     LXNavigation::GliderInfo glider;
     glider.reg_no = "D-LKXD";
     glider.comp_id = "XD";
     glider.glider_class = LXNavigation::GliderClass::Open;
-    ok1(LXNavigation::NMEAv2::GenerateLXDT_GLIDER_SET(glider) == "SET,GLIDER,D-KLXD,XD,OPEN");
+    ok1(LXNavigation::NMEAv2::GenerateLXDT_GLIDER_SET(glider) == "LXDT,SET,GLIDER,D-KLXD,XD,OPEN");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_GLIDER_ANS("LXDT,ANS,GLIDER,JS3 15m,D-KLXD,XD,OPEN");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_GLIDER_ANS("JS3 15m,D-KLXD,XD,OPEN");
     ok1(parsing_result.reg_no == "D-KLXD");
     ok1(parsing_result.comp_id == "XD");
     ok1(parsing_result.polar_name == "JS3 15m");
@@ -181,10 +296,10 @@ TestLXDT_PILOT()
     LXNavigation::PilotInfo pilot;
     pilot.name = "ACE";
     pilot.surname = "FLYER";
-    ok1(LXNavigation::NMEAv2::GenerateLXDT_PILOT_SET(pilot) == "SET,PILOT,ACE,FLYER");
+    ok1(LXNavigation::NMEAv2::GenerateLXDT_PILOT_SET(pilot) == "LXDT,SET,PILOT,ACE,FLYER");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_PILOT_ANS("LXDT,ANS,PILOT,ACE,FLYER");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_PILOT_ANS("ACE,FLYER");
     ok1(parsing_result.name == "ACE");
     ok1(parsing_result.surname == "FLYER");
   }
@@ -202,7 +317,7 @@ TestLXDT_TSK_PAR()
     ok1(LXNavigation::NMEAv2::GenerateLXDT_TSK_PAR_SET(task) == "SET,TSK_PAR,1,,02:30");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_TSK_PAR_ANS("LXDT,ANS,TSK_PAR,1,700,02:30");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_TSK_PAR_ANS("1,700,02:30");
     ok1(parsing_result.finish_1000);
     ok1(parsing_result.finish_alt_offset == 700);
     ok1(equals(parsing_result.aat_time_sec, 9000));
@@ -212,7 +327,7 @@ TestLXDT_TSK_PAR()
 static void
 TestLXDT_MC_BAL()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_MC_BAL_GET() == "GET,MC_BAL");
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_MC_BAL_GET() == "LXDT,GET,MC_BAL");
   {
     LXNavigation::GlideParameters glider_parameters;
     LXNavigation::DeviceParameters device_parameters;
@@ -225,7 +340,7 @@ TestLXDT_MC_BAL()
     ok1(LXNavigation::NMEAv2::GenerateLXDT_MC_BAL_SET(std::make_pair(glider_parameters, device_parameters)) == "SET,MC_BAL,1.1,200,30,55,70,20");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_MC_BAL_ANS("LXDT,ANS,MC_BAL,1.1,200,30,55,70,20");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_MC_BAL_ANS("1.1,200,30,55,70,20");
     ok1(equals(parsing_result.first.mc_ready, 1.1));
     ok1(parsing_result.first.load_factor == 200);
     ok1(parsing_result.first.bugs == 30);
@@ -238,7 +353,7 @@ TestLXDT_MC_BAL()
 static void
 TestLXDT_RADIO()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_RADIO_GET() == "GET,RADIO");
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_RADIO_GET() == "LXDT,GET,RADIO");
   {
     LXNavigation::RadioParameters radio;
     radio.active_freq = 118.475;
@@ -246,10 +361,10 @@ TestLXDT_RADIO()
     radio.volume = 9;
     radio.squelch = 8;
     radio.vox = 7;
-    ok1(LXNavigation::NMEAv2::GenerateLXDT_RADIO_SET(radio) == "SET,RADIO,118.475,121.500,9,8,7");
+    ok1(LXNavigation::NMEAv2::GenerateLXDT_RADIO_SET(radio) == "LXDT,SET,RADIO,118.475,121.500,9,8,7");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_RADIO_ANS("LXDT,ANS,RADIO,128.800,118.475,10,5,33");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_RADIO_ANS("128.800,118.475,10,5,33");
     ok1(equals(parsing_result.active_freq, 128.800));
     ok1(equals(parsing_result.standby_freq, 118.475));
     ok1(parsing_result.volume == 10);
@@ -261,35 +376,35 @@ TestLXDT_RADIO()
 static void
 TestLXDT_R_SWITCH()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_R_SWITCH_TOGGLE() == "SET,R_SWITCH");
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_R_SWITCH_TOGGLE() == "LXDT,SET,R_SWITCH");
 }
 
 static void
 TestLXDT_R_DUAL()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_R_DUAL_SET(true) == "SET,R_DUAL,1");
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_R_DUAL_SET(false) == "SET,R_DUAL,0"); //crc
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_R_DUAL_SET(true) == "LXDT,SET,R_DUAL,1");
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_R_DUAL_SET(false) == "LXDT,SET,R_DUAL,0");
 }
 
 static void
 TestLXDT_R_SPACING()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_R_SPACING_SET(true) == "SET,R_SPACING,1");
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_R_SPACING_SET(false) == "SET,R_SPACING,0"); //crc
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_R_SPACING_SET(true) == "LXDT,SET,R_SPACING,1");
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_R_SPACING_SET(false) == "LXDT,SET,R_SPACING,0");
 }
 
 static void
 TestLXDT_FLIGHTS_NO()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_FLIGHTS_NO_GET() == "GET,FLIGHTS_NO");
-  ok1(LXNavigation::NMEAv2::ParseLXDT_FLIGHTS_NO_ANS("LXDT,ANS,FLIGHTS_NO,9") == 9);
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_FLIGHTS_NO_GET() == "LXDT,GET,FLIGHTS_NO");
+  ok1(LXNavigation::NMEAv2::ParseLXDT_FLIGHTS_NO_ANS("9") == 9);
 }
 
 static void
 TestLXDT_FLIGHT_INFO()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_FLIGHT_INFO_GET(3) == "GET,FLIGHT_INFO,3");
-  auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_FLIGHT_INFO_ANS("LXDT,ANS,FLIGHT_INFO,1,03JLQYT1,19.03.2020"
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_FLIGHT_INFO_GET(3) == "LXDT,GET,FLIGHT_INFO,3");
+  auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_FLIGHT_INFO_ANS("1,03JLQYT1,19.03.2020"
                                                                ",07:08:24,07:11:27,ACE,FLYER,D-KLXD,XD,0,10"
                                                                ",1260,98");
   ok1(parsing_result.flight_id == 1);
@@ -313,6 +428,10 @@ int main(int argc, char **argv)
 
   TestPFLX0();
   TestPFLX2();
+  TestLXWP0();
+  TestLXWP1();
+  TestLXWP2();
+  TestLXWP3();
 
   TestLXBC();
   TestLXDT_ANS_Status();

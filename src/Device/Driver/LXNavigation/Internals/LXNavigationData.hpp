@@ -118,8 +118,8 @@ struct TurnpointData
   static constexpr u_int8_t max_points = 12;
 
   u_int16_t id;
-  u_int8_t total_tp_count;
-  TurnpointType type;
+  u_int8_t total_tp_count; //set only
+  TurnpointType type; //get only
   GeoPoint location;
   NarrowString<10> name;
 };
@@ -161,15 +161,15 @@ enum class GliderClass
 struct GliderInfo
 {
   NarrowString<13> polar_name;
-  NarrowString<9> reg_no;
+  NarrowString<32> reg_no;
   NarrowString<5> comp_id;
   GliderClass glider_class;
 };
 
 struct PilotInfo
 {
-  NarrowString<20> name;
-  NarrowString<20> surname;
+  NarrowString<64> name;
+  NarrowString<64> surname;
 };
 
 struct TaskParameters

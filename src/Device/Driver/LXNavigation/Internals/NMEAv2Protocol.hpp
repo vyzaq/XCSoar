@@ -99,7 +99,7 @@ RadioParameters ParseLXDT_RADIO_ANS(const NMEAInputLine &line);
 Message GenerateLXDT_FLIGHTS_NO_GET();
 int16_t ParseLXDT_FLIGHTS_NO_ANS(const NMEAInputLine &line);
 
-Message GenerateLXDT_FLIGHT_INFO_GET(u_int16_t turnpoint_id);
+Message GenerateLXDT_FLIGHT_INFO_GET(u_int16_t flight_index);
 FlightInfo ParseLXDT_FLIGHT_INFO_ANS(const NMEAInputLine &line);
 
 Message GenerateLXDT_R_SWITCH_TOGGLE();

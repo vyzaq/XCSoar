@@ -120,7 +120,7 @@ int16_t ParseLXDT_FLIGHTS_NO_ANS(const NMEAInputLine &line)
   return {};
 }
 
-Message GenerateLXDT_FLIGHT_INFO_GET(u_int16_t turnpoint_id)
+Message GenerateLXDT_FLIGHT_INFO_GET(u_int16_t flight_index)
 {
   return {};
 }

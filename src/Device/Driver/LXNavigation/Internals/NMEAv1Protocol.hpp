@@ -52,14 +52,14 @@ bool IsLineMatch(const NMEAInputLine& nmea_line, Sentences sentence);
 Message GeneratePFLX0(const PFLX0Request &request);
 
 Message GeneratePFLX2ForMcReady(double mc);
-Message GeneratePFLX2ForBugs(double bugs);
+Message GeneratePFLX2ForBugs(uint16_t bugs);
 Message GeneratePFLX2ForVolume(unsigned volume);
 Message GeneratePFLX2ForBallast(double fraction, double overload);
 
-void ParseLXWP0(const NMEAInputLine &line, NMEAInfo &info);
-DeviceInfo ParseLXWP1(const NMEAInputLine &line);
-void ParseLXWP2(const NMEAInputLine &line, NMEAInfo &info);
-void ParseLXWP3(const NMEAInputLine &line, NMEAInfo &info);
+void ParseLXWP0(NMEAInputLine &line, NMEAInfo &info);
+DeviceInfo ParseLXWP1(NMEAInputLine &line);
+void ParseLXWP2(NMEAInputLine &line, NMEAInfo &info);
+void ParseLXWP3(NMEAInputLine &line, NMEAInfo &info);
 
 }
 }

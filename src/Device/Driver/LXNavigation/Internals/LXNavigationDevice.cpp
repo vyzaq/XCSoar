@@ -28,19 +28,24 @@ Copyright_License {
 
 #include "Device/Port/Port.hpp"
 #include "Device/Util/NMEAWriter.hpp"
+#include "Device/Declaration.hpp"
+#include "Device/RecordedFlight.hpp"
 #include "Operation/Operation.hpp"
 #include "NMEA/Checksum.hpp"
 #include "NMEA/InputLine.hpp"
 #include "NMEA/Info.hpp"
 #include <OS/Path.hpp>
+#include "Device/Util/NMEAReader.hpp"
+#include "Time/TimeoutClock.hpp"
 
 #include <utility>
+#include <chrono>
 
 namespace LXNavigation
 {
 namespace
 {
-bool IsDeviceSupported(const DeviceInfo& device)
+bool IsDeviceSupported(const DeviceInfo &device)
 {
   if(device.name == "LX Eos 57")
   {
@@ -64,6 +69,42 @@ bool IsDeviceSupported(const DeviceInfo& device)
   }
   return false;
 }
+
+TurnpointZone ConvertToZone(const Declaration::TurnPoint &turnpoint)
+{
+  TurnpointZone zone{};
+  zone.direction = Direction::Symmetric;
+  zone.is_auto_next = true;
+  zone.r1 = turnpoint.radius;
+  switch (turnpoint.shape) {
+  case Declaration::TurnPoint::CYLINDER:
+    zone.a1 = 180;
+    break;
+  case Declaration::TurnPoint::DAEC_KEYHOLE:
+  case Declaration::TurnPoint::SECTOR:
+    zone.a1 = 45;
+    break;
+  case Declaration::TurnPoint::LINE:
+    zone.is_line = true;
+    zone.r1 = turnpoint.radius;
+    break;
+    break;
+
+  }
+  return zone;
+}
+
+int GetNumberOfFlights(Port &port, PortNMEAReader &reader,
+                       OperationEnvironment &env, TimeoutClock timeout)
+{
+  return -1;
+}
+
+FlightInfo WaitAndReadFlightInfo(PortNMEAReader& reader)
+{
+  return {};
+}
+
 }
 
 LXNavigationDevice::LXNavigationDevice(Port &communication_port, unsigned baud_rate, unsigned bulk_baud_rate)
@@ -153,7 +194,7 @@ LXNavigationDevice::PutBallast(double fraction, double overload, OperationEnviro
 bool
 LXNavigationDevice::PutBugs(double bugs, OperationEnvironment &env)
 {
-  PortWriteNMEA(port, NMEAv1::GeneratePFLX2ForBugs(bugs), env);
+  PortWriteNMEA(port, NMEAv1::GeneratePFLX2ForBugs(100 - static_cast<unsigned>(bugs*100)), env);
   return true;
 }
 
@@ -198,7 +239,37 @@ LXNavigationDevice::PutStandbyFrequency(RadioFrequency frequency, const TCHAR *n
 bool
 LXNavigationDevice::Declare(const Declaration &declaration, const Waypoint *home, OperationEnvironment &env)
 {
-  return false;
+  if(declaration.turnpoints.size() > TurnpointData::max_points)
+    return false;
+
+  {
+    PilotInfo pilot_info;
+    pilot_info.name = declaration.pilot_name; //split in the space?
+    PortWriteNMEA(port, NMEAv2::GenerateLXDT_PILOT_SET(pilot_info), env);
+  }
+  {
+    GliderInfo glider_info;
+    glider_info.reg_no = declaration.aircraft_registration;
+    glider_info.comp_id = declaration.competition_id;
+    PortWriteNMEA(port, NMEAv2::GenerateLXDT_GLIDER_SET(glider_info), env);
+  }
+
+  TurnpointData data;
+  auto turnpoints_quantity = declaration.turnpoints.size();
+  data.total_tp_count = turnpoints_quantity + 2; // +2 because according to spec number have to append takeoff and landing
+  for(unsigned i = 0; i < turnpoints_quantity; ++i)
+  {
+    const auto &turnpoint = declaration.turnpoints.at(i);
+
+    data.id = i;
+    data.name.SetASCII(turnpoint.waypoint.name.c_str());
+    data.location = turnpoint.waypoint.location;
+    PortWriteNMEA(port, NMEAv2::GenerateLXDT_TP_SET(data), env);
+    PortWriteNMEA(port, NMEAv2::GenerateLXDT_ZONE_SET(ConvertToZone(turnpoint)), env);
+  }
+  port.Drain();
+  //add validation of declared task (process ANS or read task from device
+  return true;
 }
 
 void
@@ -209,12 +280,50 @@ LXNavigationDevice::OnSysTicker()
 bool
 LXNavigationDevice::ReadFlightList(RecordedFlightList &flight_list, OperationEnvironment &env)
 {
+  port.StopRxThread();
+
+  PortNMEAReader reader(port, env);
+
+  TimeoutClock timeout(std::chrono::seconds(2));
+  int flights_quantity = GetNumberOfFlights(port, reader, env, timeout);
+  if (flights_quantity <= 0)
+    return flights_quantity == 0;
+
+  env.SetProgressRange(flights_quantity);
+
+  for(int i = 0; i < flights_quantity; ++i)
+  {
+    env.SetProgressPosition(i);
+    PortWriteNMEA(port, NMEAv2::GenerateLXDT_FLIGHT_INFO_GET(i+1), env);
+    auto flight_info = WaitAndReadFlightInfo(reader);
+    RecordedFlightInfo app_flight_info;
+    app_flight_info.date = flight_info.date;
+    app_flight_info.start_time = flight_info.take_off;
+    app_flight_info.end_time = flight_info.landing;
+    app_flight_info.internal.lx_navigation = flight_info.flight_id;
+    flight_list.emplace_back(app_flight_info);
+  }
   return false;
 }
 
 bool
 LXNavigationDevice::DownloadFlight(const RecordedFlightInfo &flight, Path path, OperationEnvironment &env)
 {
+  if (flight.internal.lx_navigation <= 0)
+    return false;
+
+  state = State::DOWNLOADING_FLIGHT;
+  port.StopRxThread();
+  port.Drain();
+  if(device_bulk_baud_rate > 0
+     && device_bulk_baud_rate != device_baud_rate) {
+    env.Sleep(std::chrono::milliseconds(100));
+    if (!port.SetBaudrate(device_bulk_baud_rate)) {
+      state = State::UNKNOWN;
+      return false;
+    }
+
+  }
   return false;
 }
 }

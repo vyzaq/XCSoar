@@ -69,6 +69,11 @@ struct RecordedFlightInfo : FlightInfo {
      * Flight number, used by the Flytec driver.
      */
     unsigned flytec;
+
+    /**
+     * Flight id, used by the LX Navigation driver.
+     */
+    uint16_t lx_navigation;
   } internal;
 };
 

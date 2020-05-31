@@ -1544,12 +1544,22 @@ LXN2IGC_SOURCES = \
 $(eval $(call link-program,lxn2igc,LXN2IGC))
 
 TEST_LXNAVIGATION_PROTOCOL_SOURCES = \
+  $(SRC)/Atmosphere/AirDensity.cpp \
   $(SRC)/NMEA/InputLine.cpp \
+  $(SRC)/NMEA/ExternalSettings.cpp \
+  $(SRC)/NMEA/Info.cpp \
+  $(SRC)/NMEA/GPSState.cpp \
+  $(SRC)/NMEA/SwitchState.cpp \
+  $(SRC)/NMEA/Attitude.cpp \
+  $(SRC)/NMEA/Acceleration.cpp \
+  $(SRC)/Units/Descriptor.cpp \
+  $(SRC)/Units/System.cpp \
   $(DRIVER_SRC_DIR)/LXNavigation/Internals/NMEAv2Protocol.cpp \
   $(DRIVER_SRC_DIR)/LXNavigation/Internals/NMEAv1Protocol.cpp \
+  $(DRIVER_SRC_DIR)/LXNavigation/Internals/BinaryProtocol.cpp \
   $(TEST_SRC_DIR)/tap.c \
 	$(TEST_SRC_DIR)/TestLXNavigationProtocol.cpp
-TEST_LXNAVIGATION_PROTOCOL_DEPENDS = DRIVER UTIL IO
+TEST_LXNAVIGATION_PROTOCOL_DEPENDS = DRIVER UTIL IO OS TIME
 $(eval $(call link-program,TestLXNavigationProtocol,TEST_LXNAVIGATION_PROTOCOL))
 
 RUN_IGC_WRITER_SOURCES = \
