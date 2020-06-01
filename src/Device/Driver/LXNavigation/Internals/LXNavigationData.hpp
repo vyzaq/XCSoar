@@ -29,16 +29,10 @@ Copyright_License {
 #include "Time/BrokenDate.hpp"
 #include "Time/BrokenTime.hpp"
 
+#include <optional>
+
 namespace LXNavigation
 {
-enum class Sentences
-{
-  LXWP0,
-  LXWP1,
-  LXWP2,
-  LXWP3,
-  LXDT
-};
 
 struct BasicFlightInfo
 {
@@ -46,7 +40,7 @@ struct BasicFlightInfo
   float tas;
   float altitude;
   float vario6;
-  u_int16_t heading;
+  uint16_t heading;
   float wind_direction;
   float wind_speed;
 };
@@ -66,16 +60,16 @@ struct StatusResult
 struct DeviceInfo
 {
   NarrowString<60> name;
-  u_int32_t serial;
-  float sw_version;
-  float hw_version;
+  uint32_t serial;
+  double sw_version;
+  double hw_version;
 };
 
 struct GlideParameters
 {
-  float mc_ready;
-  float load_factor;
-  u_int16_t bugs;
+  std::optional<double> mc_ready;
+  std::optional<double> load_factor;
+  std::optional<int> bugs;
 };
 
 enum class SpeedCommandMode
@@ -97,12 +91,12 @@ struct SpeedCommandParameters
   int16_t alt_offset;
   SpeedCommandMode sc_mode;
   float filter;
-  u_int16_t te_level;
-  u_int16_t int_time;
-  u_int8_t range;
+  uint16_t te_level;
+  uint16_t int_time;
+  uint8_t range;
   float silence;
   SpeedCommandSwitchMode switch_mode;
-  u_int16_t speed;
+  uint16_t speed;
   NarrowString<60> polar_name;
 };
 
@@ -115,10 +109,10 @@ enum class TurnpointType
 
 struct TurnpointData
 {
-  static constexpr u_int8_t max_points = 12;
+  static constexpr uint8_t max_points = 12;
 
-  u_int16_t id;
-  u_int8_t total_tp_count; //set only
+  uint16_t id;
+  uint8_t total_tp_count; //set only
   TurnpointType type; //get only
   GeoPoint location;
   NarrowString<10> name;
@@ -135,16 +129,16 @@ enum class Direction
 
 struct TurnpointZone
 {
-  u_int16_t id;
+  uint16_t id;
   Direction direction;
   bool is_auto_next;
   bool is_line;
-  u_int16_t a1;
-  u_int16_t a2;
-  u_int16_t a21;
-  u_int16_t r1;
-  u_int16_t r2;
-  u_int16_t elevation;
+  uint16_t a1;
+  uint16_t a2;
+  uint16_t a21;
+  uint16_t r1;
+  uint16_t r2;
+  uint16_t elevation;
 };
 
 enum class GliderClass
@@ -175,41 +169,41 @@ struct PilotInfo
 struct TaskParameters
 {
   bool finish_1000;
-  u_int16_t finish_alt_offset;
+  uint16_t finish_alt_offset;
   double aat_time_sec;
 };
 
 struct DeviceParameters
 {
-  u_int8_t brightness;
-  u_int8_t vario_vol;
-  u_int8_t sc_vol;
+  std::optional<int> brightness;
+  std::optional<int> vario_vol;
+  std::optional<int> sc_vol;
 };
 
 struct RadioParameters
 {
   float active_freq;
   float standby_freq;
-  u_int16_t volume;
-  u_int16_t squelch;
-  u_int16_t vox;
+  int volume;
+  int squelch;
+  int vox;
 };
 
 struct FlightInfo
 {
-u_int16_t flight_id;
-NarrowString<10> filename;
-BrokenDate date;
-BrokenTime take_off;
-BrokenTime landing;
-NarrowString<13> pilot_name;
-NarrowString<13> pilot_surname;
-NarrowString<9> reg_no;
-NarrowString<9> comp_id;
-float min_gforce;
-float max_gforce;
-u_int16_t max_alt;
-double max_ias;
+  uint16_t flight_id;
+  NarrowString<10> filename;
+  BrokenDate date;
+  BrokenTime take_off;
+  BrokenTime landing;
+  NarrowString<13> pilot_name;
+  NarrowString<13> pilot_surname;
+  NarrowString<9> reg_no;
+  NarrowString<9> comp_id;
+  float min_gforce;
+  float max_gforce;
+  uint16_t max_alt;
+  double max_ias;
 };
 
 }

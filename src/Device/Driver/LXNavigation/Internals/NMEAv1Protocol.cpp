@@ -1,7 +1,10 @@
 #include "NMEAv1Protocol.hpp"
+#include "NMEAInfoConvertors.hpp"
+
 #include "NMEA/InputLine.hpp"
 #include "NMEA/Info.hpp"
 #include "Units/System.hpp"
+#include "Engine/GlideSolvers/PolarCoefficients.hpp"
 
 namespace LXNavigation
 {
@@ -54,9 +57,11 @@ Message GeneratePFLX2ForBallast(double fraction, double overload)
   return result;
 }
 
-bool IsLineMatch(const NMEAInputLine &nmea_line, Sentences sentence)
+Message GeneratePFLX2ForPolar(const PolarCoefficients &polar)
 {
-  return true;
+  Message result;
+  result.Format("PFLX2,,,,%.2f,%.2f,%.2f,", polar.a, polar.b, polar.c);
+  return result;
 }
 
 void ParseLXWP0(NMEAInputLine &line, NMEAInfo &info)
@@ -97,12 +102,31 @@ void ParseLXWP0(NMEAInputLine &line, NMEAInfo &info)
 
 DeviceInfo ParseLXWP1(NMEAInputLine &line)
 {
-  return {};
+  DeviceInfo result{};
+  line.Read(result.name.buffer(), result.name.capacity());
+  result.serial = line.Read(0);
+  result.sw_version = line.Read(0.0);
+  result.hw_version = line.Read(0.0);
+  return result;
 }
 
-void ParseLXWP2(NMEAInputLine &line, NMEAInfo &info)
+std::tuple<GlideParameters, PolarCoefficients, int> ParseLXWP2(NMEAInputLine &line)
 {
+  GlideParameters glide_parameters;
+  PolarCoefficients polar{};
 
+  ReadElement(line, glide_parameters.mc_ready);
+  ReadElement(line, glide_parameters.load_factor);
+  ReadElement(line, glide_parameters.bugs);
+
+  line.ReadChecked(polar.a);
+  line.ReadChecked(polar.b);
+  line.ReadChecked(polar.c);
+
+  int volume = -1;
+  line.ReadChecked(volume);
+
+  return {glide_parameters, polar, volume};
 }
 
 void ParseLXWP3(NMEAInputLine &line, NMEAInfo &info)

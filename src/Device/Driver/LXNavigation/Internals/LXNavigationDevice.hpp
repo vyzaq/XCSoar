@@ -81,6 +81,9 @@ public:
   bool DownloadFlight(const RecordedFlightInfo &flight,
                       Path path,
                       OperationEnvironment &env) override;
+
+  void OnCalculatedUpdate(const MoreData &basic,
+                  const DerivedInfo &calculated) override;
 };
 }
 

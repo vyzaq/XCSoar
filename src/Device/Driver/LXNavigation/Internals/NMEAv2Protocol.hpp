@@ -24,44 +24,25 @@ Copyright_License {
 #ifndef XCSOAR_DEVICE_DRIVER_LXNAVIGATION_LXDT_HPP
 #define XCSOAR_DEVICE_DRIVER_LXNAVIGATION_LXDT_HPP
 
-#include "Util/StaticString.hxx"
 #include "Device/Driver/LXNavigation/Internals/LXNavigationData.hpp"
+#include "ProtocolDefinitions.hpp"
+#include "ProtocolMatchers.hpp"
+
+#include "NMEA/InputLine.hpp"
 
 class NMEAInputLine;
+struct NMEAInfo;
 
 namespace LXNavigation
 {
 namespace NMEAv2
 {
-using Message = NarrowString<60>;
-
-enum class SentenceAction
+template<Sentences sentence, SentenceCode command, SentenceAction status>
+bool IsLineMatch(const NMEAInputLine& nmea_line)
 {
-  INFO,
-  TP,
-  ZONE,
-  GLIDER,
-  PILOT,
-  TSK_PAR,
-  MC_BAL,
-  RADIO,
-  R_SWITCH,
-  R_DUAL,
-  R_SPACING,
-  FLIGHTS_NO,
-  FLIGHT_INFO,
-  ERROR,
-  OK
-};
-
-enum class SentenceCode
-{
-  GET,
-  SET,
-  ANS
-};
-
-bool IsLineMatch(const NMEAInputLine& nmea_line, Sentences sentence, SentenceAction command, SentenceCode status);
+  NMEAInputLine line(nmea_line);
+  return MatchSentence<sentence>(line) && MatchStatus<status>(line) && MatchCommand<command>(line);
+}
 
 StatusResult ParseLXDT_ANS_Status(const NMEAInputLine &line);
 
@@ -90,7 +71,7 @@ TaskParameters ParseLXDT_TSK_PAR_ANS(const NMEAInputLine &line);
 
 Message GenerateLXDT_MC_BAL_GET();
 Message GenerateLXDT_MC_BAL_SET(const std::pair<GlideParameters, DeviceParameters>& data);
-std::pair<GlideParameters, DeviceParameters> ParseLXDT_MC_BAL_ANS(const NMEAInputLine &line);
+std::pair<GlideParameters, DeviceParameters> ParseLXDT_MC_BAL_ANS(NMEAInputLine &line);
 
 Message GenerateLXDT_RADIO_GET();
 Message GenerateLXDT_RADIO_SET(const RadioParameters& data);

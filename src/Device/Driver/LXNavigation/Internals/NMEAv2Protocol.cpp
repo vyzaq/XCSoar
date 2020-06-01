@@ -1,9 +1,14 @@
 #include "NMEAv2Protocol.hpp"
+#include "NMEAInfoConvertors.hpp"
+
+#include "NMEA/InputLine.hpp"
+#include "NMEA/Info.hpp"
 
 namespace LXNavigation
 {
 namespace NMEAv2
 {
+
 StatusResult ParseLXDT_ANS_Status(const NMEAInputLine &line)
 {
   return {};
@@ -93,9 +98,20 @@ Message GenerateLXDT_MC_BAL_SET(const std::pair<GlideParameters, DeviceParameter
 {
   return {};
 }
-std::pair<GlideParameters, DeviceParameters> ParseLXDT_MC_BAL_ANS(const NMEAInputLine &line)
+std::pair<GlideParameters, DeviceParameters> ParseLXDT_MC_BAL_ANS(NMEAInputLine &line)
 {
-  return {};
+  GlideParameters glide_parameters;
+  DeviceParameters device_parameters;
+
+
+  ReadElement(line, glide_parameters.mc_ready);
+  ReadElement(line, glide_parameters.load_factor);
+  ReadElement(line, glide_parameters.bugs);
+
+  ReadElement(line, device_parameters.brightness);
+  ReadElement(line, device_parameters.vario_vol);
+  ReadElement(line, device_parameters.sc_vol);
+  return {glide_parameters, device_parameters};
 }
 
 Message GenerateLXDT_RADIO_GET()
@@ -140,11 +156,6 @@ Message GenerateLXDT_R_DUAL_SET(bool is_dual_enabled)
 Message GenerateLXDT_R_SPACING_SET(bool is_833)
 {
   return {};
-}
-
-bool IsLineMatch(const NMEAInputLine &nmea_line, Sentences sentence, SentenceAction command, SentenceCode status)
-{
-  return true;
 }
 
 }

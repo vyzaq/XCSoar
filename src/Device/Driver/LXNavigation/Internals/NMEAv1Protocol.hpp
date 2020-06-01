@@ -24,8 +24,13 @@ Copyright_License {
 #ifndef XCSOAR_DEVICE_DRIVER_LXNAVIGATION_NMEAV1_PROTOCOL_HPP
 #define XCSOAR_DEVICE_DRIVER_LXNAVIGATION_NMEAV1_PROTOCOL_HPP
 
-#include "Util/StaticString.hxx"
+#include "ProtocolDefinitions.hpp"
+#include "ProtocolMatchers.hpp"
 #include "Device/Driver/LXNavigation/Internals/LXNavigationData.hpp"
+
+#include "Util/StaticString.hxx"
+#include "NMEA/InputLine.hpp"
+#include "Engine/GlideSolvers/PolarCoefficients.hpp"
 
 #include <vector>
 
@@ -47,7 +52,12 @@ constexpr int PFLX0_ONCE = -1;
 constexpr int PFLX0_DISABLED = 0;
 using PFLX0Request = std::vector<std::pair<NarrowString<6>, int> >;
 
-bool IsLineMatch(const NMEAInputLine& nmea_line, Sentences sentence);
+template<Sentences sentence>
+bool IsLineMatch(const NMEAInputLine& nmea_line)
+{
+  NMEAInputLine line(nmea_line);
+  return MatchSentence<sentence>(line);
+}
 
 Message GeneratePFLX0(const PFLX0Request &request);
 
@@ -55,10 +65,11 @@ Message GeneratePFLX2ForMcReady(double mc);
 Message GeneratePFLX2ForBugs(uint16_t bugs);
 Message GeneratePFLX2ForVolume(unsigned volume);
 Message GeneratePFLX2ForBallast(double fraction, double overload);
+Message GeneratePFLX2ForPolar(const PolarCoefficients& polar);
 
 void ParseLXWP0(NMEAInputLine &line, NMEAInfo &info);
 DeviceInfo ParseLXWP1(NMEAInputLine &line);
-void ParseLXWP2(NMEAInputLine &line, NMEAInfo &info);
+std::tuple<GlideParameters, PolarCoefficients, int> ParseLXWP2(NMEAInputLine &line);
 void ParseLXWP3(NMEAInputLine &line, NMEAInfo &info);
 
 }

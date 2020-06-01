@@ -25,6 +25,7 @@ Copyright_License {
 
 #include "NMEAv2Protocol.hpp"
 #include "NMEAv1Protocol.hpp"
+#include "NMEAInfoConvertors.hpp"
 
 #include "Device/Port/Port.hpp"
 #include "Device/Util/NMEAWriter.hpp"
@@ -51,11 +52,9 @@ bool IsDeviceSupported(const DeviceInfo &device)
   {
     return !(device.sw_version < 1.9);
   }
-  else if(device.name == "LX Eos 80")
-  {
-    return !(device.sw_version < 1.5);
-  }
-  else if(device.name == "LX Era")
+  else if(device.name == "LX Era" ||
+          device.name == "LX Eos 80" ||
+          device.name == "LX Eos")
   {
     return !(device.sw_version < 1.5);
   }
@@ -127,7 +126,7 @@ LXNavigationDevice::EnableNMEA(OperationEnvironment &env)
   NMEAv1::PFLX0Request request;
   request.emplace_back(NMEAv1::FLIGHT_DATA_PARAMETERS, 1);
   request.emplace_back(NMEAv1::BASIC_GLIDE_INFO_PARAMETERS, 10);
-  request.emplace_back(NMEAv1::BASIC_DEVICE_INFO, 60);
+  request.emplace_back(NMEAv1::BASIC_DEVICE_INFO, NMEAv1::PFLX0_ONCE);
   request.emplace_back(NMEAv1::ADVANCED_GLIDE_INFO_PARAMETERS, NMEAv1::PFLX0_DISABLED);
   {
     const std::lock_guard<Mutex> lock(mutex);
@@ -148,35 +147,55 @@ LXNavigationDevice::ParseNMEA(const char *string, NMEAInfo &info)
   switch (state) {
   case State::PROCESSING_NMEA:
   {
-    if(NMEAv1::IsLineMatch(nmea_line, Sentences::LXWP1) ||
-       NMEAv2::IsLineMatch(nmea_line, Sentences::LXDT, NMEAv2::SentenceAction::INFO, NMEAv2::SentenceCode::ANS))
+    if(NMEAv1::IsLineMatch<Sentences::LXWP1>(nmea_line))
     {
-      DeviceInfo device_info{};
-      if(NMEAv1::IsLineMatch(nmea_line, Sentences::LXWP1))
-        device_info = NMEAv1::ParseLXWP1(nmea_line);
-      else
-        device_info = NMEAv2::ParseLXDT_INFO_ANS(nmea_line);
+      nmea_line.Skip();
+      auto device_info = NMEAv1::ParseLXWP1(nmea_line);
       if(!IsDeviceSupported(device_info)) {
         state = State::NOT_SUPPORTED;
-        return true;
       }
+      return true;
     }
-    else if(NMEAv1::IsLineMatch(nmea_line, Sentences::LXWP0))
+    else if(NMEAv2::IsLineMatch<Sentences::LXDT, NMEAv2::SentenceCode::INFO, NMEAv2::SentenceAction::ANS>(nmea_line))
     {
+      nmea_line.Skip(3);
+      auto device_info = NMEAv2::ParseLXDT_INFO_ANS(nmea_line);
+      if(!IsDeviceSupported(device_info)) {
+        state = State::NOT_SUPPORTED;
+      }
+      return true;
+    }
+    else if(NMEAv1::IsLineMatch<Sentences::LXWP0>(nmea_line))
+    {
+      nmea_line.Skip();
       NMEAv1::ParseLXWP0(nmea_line, info);
       return true;
     }
-    else if(NMEAv1::IsLineMatch(nmea_line, Sentences::LXWP2))
+    else if(NMEAv1::IsLineMatch<Sentences::LXWP2>(nmea_line))
     {
-      NMEAv1::ParseLXWP2(nmea_line, info);
+      nmea_line.Skip();
+      auto parameters = NMEAv1::ParseLXWP2(nmea_line);
+      ConvertToNMEAInfo(std::get<0>(parameters), info);
+      ConvertToNMEAInfo(std::get<1>(parameters), info);
+      auto volume = std::get<2>(parameters);
+      if(volume >= 0)
+        info.settings.ProvideVolume(volume, info.clock);
       return true;
     }
-    else if(NMEAv1::IsLineMatch(nmea_line, Sentences::LXWP3))
+    else if(NMEAv1::IsLineMatch<Sentences::LXWP3>(nmea_line))
     {
       NMEAv1::ParseLXWP3(nmea_line, info);
       return true;
     }
-    return true;
+    else if(NMEAv2::IsLineMatch<Sentences::LXDT, NMEAv2::SentenceCode::MC_BAL, NMEAv2::SentenceAction::ANS>(nmea_line))
+    {
+      nmea_line.Skip(3);
+      auto parameters = NMEAv2::ParseLXDT_MC_BAL_ANS(nmea_line);
+      ConvertToNMEAInfo(parameters.first, info);
+      ConvertToNMEAInfo(parameters.second, info);
+      return true;
+    }
+    break;
   }
   default:
     break;
@@ -326,4 +345,20 @@ LXNavigationDevice::DownloadFlight(const RecordedFlightInfo &flight, Path path, 
   }
   return false;
 }
+
+void LXNavigationDevice::OnCalculatedUpdate(const MoreData &basic, const DerivedInfo &calculated)
+{
+  NullOperationEnvironment env;
+
+//  PutIdealPolar(calculated, env);
+//  PutRealPolar(calculated, env);
+
+//  if (!_mc_valid) {
+//    // this is the MacCready at start up
+//    _mc = calculated.glide_polar_safety.GetMC();
+//    _mc_valid = true;
+//    RepeatMacCready(env);
+//    }
+}
+
 }

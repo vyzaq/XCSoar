@@ -54,6 +54,8 @@ LXNAVIGATION_SOURCES = \
   $(DRIVER_SRC_DIR)/LXNavigation/Register.cpp \
   $(DRIVER_SRC_DIR)/LXNavigation/Internals/NMEAv1Protocol.cpp \
   $(DRIVER_SRC_DIR)/LXNavigation/Internals/NMEAv2Protocol.cpp \
+  $(DRIVER_SRC_DIR)/LXNavigation/Internals/ProtocolMatchers.cpp \
+  $(DRIVER_SRC_DIR)/LXNavigation/Internals/NMEAInfoConvertors.cpp \
   $(DRIVER_SRC_DIR)/LXNavigation/Internals/BinaryProtocol.cpp \
   $(DRIVER_SRC_DIR)/LXNavigation/Internals/LXNavigationDevice.cpp
 
