@@ -1537,6 +1537,7 @@ static void
 TestLXNavigation()
 {
   NullPort null_port;
+  NullOperationEnvironment env;
   Device *device = lx_navigation_driver.CreateOnPort(dummy_config, null_port);
   ok1(device != nullptr);
 
@@ -1545,23 +1546,26 @@ TestLXNavigation()
   nmea_info.clock = 1;
 
   /* empty sentence */
+  device->EnableNMEA(env);
+
   ok1(device->ParseNMEA("$LXWP0,N,,,,,,,,,,,*6d", nmea_info));
   ok1(!nmea_info.pressure_altitude_available);
   ok1(!nmea_info.baro_altitude_available);
   ok1(!nmea_info.airspeed_available);
   ok1(!nmea_info.total_energy_vario_available);
-  ok1(!nmea_info.external_wind_available);
-
+  ok1(nmea_info.external_wind_available);
+  ok1(equals(nmea_info.external_wind.bearing.Degrees(), 0.0));
+  ok1(equals(nmea_info.external_wind.norm, 0.0));
 
   nmea_info.Reset();
   nmea_info.clock = 1;
 
   //LXWP0
-  ok1(device->ParseNMEA("$LXWP0,Y,119.4,1717.6,0.02,0.03,0.04,0.05,0.06,0.07,25,219,107.2*5b", nmea_info));
+  ok1(device->ParseNMEA("$LXWP0,Y,119.4,1717.6,0.02,0.03,0.04,0.05,0.06,0.07,25,219,107.2*57", nmea_info));
 
-  ok1(nmea_info.pressure_altitude_available);
-  ok1(!nmea_info.baro_altitude_available);
-  ok1(equals(nmea_info.pressure_altitude, 1717.6));
+  ok1(!nmea_info.pressure_altitude_available);
+  ok1(nmea_info.baro_altitude_available);
+  ok1(equals(nmea_info.baro_altitude, 1717.6));
 
   ok1(nmea_info.airspeed_available);
   ok1(equals(nmea_info.true_airspeed, Units::ToSysUnit(119.4, Unit::KILOMETER_PER_HOUR)));
@@ -1580,11 +1584,11 @@ TestLXNavigation()
   nmea_info.clock = 1;
 
   //LXWP1
-  ok1(device->ParseNMEA(" $LXWP1,LX Eos,34949,1.5,1.4*7d", nmea_info));
+  ok1(device->ParseNMEA("$LXWP1,LX Eos,34949,1.5,1.4*7d", nmea_info));
   ok1(nmea_info.device.product == "LX Eos");
   ok1(nmea_info.device.serial == "34949");
-  ok1(nmea_info.device.software_version == "1.5");
-  ok1(nmea_info.device.hardware_version == "1.4");
+  ok1(nmea_info.device.software_version == "1.50");
+  ok1(nmea_info.device.hardware_version == "1.40");
 
   nmea_info.Reset();
   nmea_info.clock = 1;
@@ -1596,7 +1600,7 @@ TestLXNavigation()
   ok1(nmea_info.settings.ballast_overload_available);
   ok1(equals(nmea_info.settings.ballast_overload, 1.11));
   ok1(nmea_info.settings.bugs_available);
-  ok1(equals(nmea_info.settings.bugs, 0.13));
+  ok1(equals(nmea_info.settings.bugs, 0.87));
   ok1(nmea_info.settings.volume_available);
   ok1(equals(nmea_info.settings.volume, 45));
 
@@ -1646,10 +1650,6 @@ TestDeclare(const struct DeviceRegister &driver)
         port.baud_rate != FaultInjectionPort::DEFAULT_BAUD_RATE)
       break;
   }
-
-  device->EnableNMEA(env);
-
-  ok1(port.baud_rate == FaultInjectionPort::DEFAULT_BAUD_RATE);
 
   delete device;
 }

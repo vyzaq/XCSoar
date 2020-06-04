@@ -6,8 +6,8 @@ namespace LXNavigation
 
 void ConvertToNMEAInfo(GlideParameters &parameters, NMEAInfo &info)
 {
-  if(parameters.mc_ready)
-    info.settings.ProvideMacCready(*parameters.mc_ready, info.clock);
+  if(parameters.mac_cready)
+    info.settings.ProvideMacCready(*parameters.mac_cready, info.clock);
   if(parameters.load_factor)
     info.settings.ProvideBallastOverload(*parameters.load_factor, info.clock);
   if(parameters.bugs)

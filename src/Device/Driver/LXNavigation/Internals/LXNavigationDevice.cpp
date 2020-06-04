@@ -104,6 +104,14 @@ FlightInfo WaitAndReadFlightInfo(PortNMEAReader& reader)
   return {};
 }
 
+void DeviceInfoIntoNMEA(const DeviceInfo& device_info, NMEAInfo& info)
+{
+  info.device.product = device_info.name;
+  info.device.serial.Format("%d", device_info.serial);
+  info.device.software_version.Format("%.2f", device_info.sw_version);
+  info.device.hardware_version.Format("%.2f", device_info.hw_version);
+}
+
 }
 
 LXNavigationDevice::LXNavigationDevice(Port &communication_port, unsigned baud_rate, unsigned bulk_baud_rate)
@@ -151,6 +159,7 @@ LXNavigationDevice::ParseNMEA(const char *string, NMEAInfo &info)
     {
       nmea_line.Skip();
       auto device_info = NMEAv1::ParseLXWP1(nmea_line);
+      DeviceInfoIntoNMEA(device_info, info);
       if(!IsDeviceSupported(device_info)) {
         state = State::NOT_SUPPORTED;
       }
@@ -160,6 +169,7 @@ LXNavigationDevice::ParseNMEA(const char *string, NMEAInfo &info)
     {
       nmea_line.Skip(3);
       auto device_info = NMEAv2::ParseLXDT_INFO_ANS(nmea_line);
+      DeviceInfoIntoNMEA(device_info, info);
       if(!IsDeviceSupported(device_info)) {
         state = State::NOT_SUPPORTED;
       }
@@ -184,6 +194,7 @@ LXNavigationDevice::ParseNMEA(const char *string, NMEAInfo &info)
     }
     else if(NMEAv1::IsLineMatch<Sentences::LXWP3>(nmea_line))
     {
+      nmea_line.Skip();
       NMEAv1::ParseLXWP3(nmea_line, info);
       return true;
     }

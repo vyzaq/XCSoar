@@ -30,6 +30,7 @@ Copyright_License {
 #include "Time/BrokenTime.hpp"
 
 #include <optional>
+#include <chrono>
 
 namespace LXNavigation
 {
@@ -45,18 +46,6 @@ struct BasicFlightInfo
   float wind_speed;
 };
 
-enum class Status
-{
-  Ok,
-  Error
-};
-
-struct StatusResult
-{
-  Status status;
-  NarrowString<60> description;
-};
-
 struct DeviceInfo
 {
   NarrowString<60> name;
@@ -67,7 +56,7 @@ struct DeviceInfo
 
 struct GlideParameters
 {
-  std::optional<double> mc_ready;
+  std::optional<double> mac_cready;
   std::optional<double> load_factor;
   std::optional<int> bugs;
 };
@@ -115,7 +104,7 @@ struct TurnpointData
   uint8_t total_tp_count; //set only
   TurnpointType type; //get only
   GeoPoint location;
-  NarrowString<10> name;
+  NarrowString<30> name;
 };
 
 enum class Direction
@@ -143,6 +132,7 @@ struct TurnpointZone
 
 enum class GliderClass
 {
+  None,
   Standard,
   Meter15,
   Open,
@@ -170,7 +160,7 @@ struct TaskParameters
 {
   bool finish_1000;
   uint16_t finish_alt_offset;
-  double aat_time_sec;
+  NarrowString<6> aat_time;
 };
 
 struct DeviceParameters
@@ -182,8 +172,8 @@ struct DeviceParameters
 
 struct RadioParameters
 {
-  float active_freq;
-  float standby_freq;
+  double active_freq;
+  double standby_freq;
   int volume;
   int squelch;
   int vox;

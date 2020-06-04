@@ -127,34 +127,30 @@ static void
 TestLXWP2()
 {
   {
-    NMEAInfo info;
-    info.Reset();
-    info.clock = 1;
-    info.alive.Update(info.clock);
-
     NMEAInputLine line("1.5,1.11,13,2.96,-3.03,1.35,45");
-    LXNavigation::NMEAv1::ParseLXWP2(line, info);
-    ok1(info.settings.mac_cready_available);
-    ok1(equals(info.settings.mac_cready, 1.5));
-    ok1(info.settings.ballast_overload_available);
-    ok1(equals(info.settings.ballast_overload, 1.11));
-    ok1(info.settings.bugs_available);
-    ok1(equals(info.settings.bugs, 0.87));
-    ok1(info.settings.volume_available);
-    ok1(info.settings.volume == 45);
+
+    LXNavigation::GlideParameters glide_params;
+    PolarCoefficients polar;
+    int volume = -1;
+    std::tie(glide_params, polar, volume) = LXNavigation::NMEAv1::ParseLXWP2(line);
+    ok1(glide_params.mac_cready);
+    ok1(equals(*glide_params.mac_cready, 1.5));
+    ok1(glide_params.load_factor);
+    ok1(equals(*glide_params.load_factor, 1.11));
+    ok1(glide_params.bugs);
+    ok1(*glide_params.bugs == 13);
+    ok1(volume == 45);
   }
   {
-    NMEAInfo info;
-    info.Reset();
-    info.clock = 1;
-    info.alive.Update(info.clock);
-
     NMEAInputLine line(",,,,,,");
-    LXNavigation::NMEAv1::ParseLXWP2(line, info);
-    ok1(!info.settings.mac_cready_available);
-    ok1(!info.settings.ballast_overload_available);
-    ok1(!info.settings.bugs_available);
-    ok1(!info.settings.volume_available);
+    LXNavigation::GlideParameters glide_params;
+    PolarCoefficients polar;
+    int volume = -1;
+    std::tie(glide_params, polar, volume) = LXNavigation::NMEAv1::ParseLXWP2(line);
+    ok1(!glide_params.mac_cready);
+    ok1(!glide_params.load_factor);
+    ok1(!glide_params.bugs);
+    ok1(volume == -1);
   }
 }
 
@@ -170,7 +166,7 @@ TestLXWP3()
     NMEAInputLine line("200,2,5.0,0,29,20,10.0,1.3,1,120,0,KA6e,0");
     LXNavigation::NMEAv1::ParseLXWP3(line, info);
     ok1(info.settings.qnh_available);
-    ok1(equals(info.settings.qnh.GetHectoPascal(), 990));
+    ok1(equals(info.settings.qnh.GetHectoPascal(), 1020.59));
   }
   {
     NMEAInfo info;
@@ -192,12 +188,9 @@ TestLXBC()
 static void
 TestLXDT_ANS_Status()
 {
-  ok1(LXNavigation::NMEAv2::ParseLXDT_ANS_Status("ANS,OK").status == LXNavigation::Status::Ok);
-  {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_ANS_Status("ANS,ERROR,Parameter count mismatch");
-    ok1(parsing_result.status == LXNavigation::Status::Error);
-    ok1(parsing_result.description == "Parameter count mismatch");
-  }
+  NMEAInputLine line("Parameter count mismatch");
+  auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_ANS_Status(line);
+  ok1(parsing_result == "Parameter count mismatch");
 }
 
 static void
@@ -205,11 +198,12 @@ TestLXDT_INFO()
 {
   ok1(LXNavigation::NMEAv2::GenerateLXDT_INFO_GET() == "LXDT,GET,INFO");
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_INFO_ANS("ANS,INFO,LX Era,34949,1.4,1.1,0-[0],00,Empty,Empty");
+    NMEAInputLine line("LX Era,34949,1.4,1.1,0-[0],00,Empty,Empty");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_INFO_ANS(line);
     ok1(parsing_result.name == "LX Era");
     ok1(parsing_result.serial == 34949);
-    ok1(parsing_result.sw_version == 1.4);
-    ok1(parsing_result.hw_version == 1.1);
+    ok1(equals(parsing_result.sw_version, 1.4));
+    ok1(equals(parsing_result.hw_version, 1.1));
   }
 }
 
@@ -221,16 +215,24 @@ TestLXDT_TP()
     LXNavigation::TurnpointData turnpoint;
     turnpoint.id = 0;
     turnpoint.name = "NOVO MESTO";
-    turnpoint.location = GeoPoint(Angle::Degrees(45.810283), Angle::Degrees(15.1127));
+    turnpoint.location = GeoPoint(Angle::Degrees(15.1127), Angle::Degrees(45.810283));
     turnpoint.total_tp_count = 5;
-    ok1(LXNavigation::NMEAv2::GenerateLXDT_TP_SET(turnpoint) == "LXDT,SET,TP,0,5,2748617,906762,NOVO MESTO");
+    ok1(LXNavigation::NMEAv2::GenerateLXDT_TP_SET(turnpoint) == "LXDT,SET,TP,0,5,2748616,906762,NOVO MESTO");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_TP_ANS("2,2,2748617,906762,NOVO MESTO ");
-    ok1(parsing_result.id == 2);
-    ok1(parsing_result.name == "NOVO MESTO ");
-    ok1(parsing_result.location == GeoPoint(Angle::Degrees(45.810283), Angle::Degrees(15.1127)));
-    ok1(parsing_result.type == LXNavigation::TurnpointType::Landing);
+    NMEAInputLine line("2,2,2748616,906762,NOVO MESTO ");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_TP_ANS(line);
+    ok1(parsing_result);
+    ok1(parsing_result->id == 2);
+    ok1(parsing_result->name == "NOVO MESTO ");
+    ok1(equals(parsing_result->location.longitude.Degrees(), 15.1127));
+    ok1(equals(parsing_result->location.latitude.Degrees(), 45.810283));
+    ok1(parsing_result->type == LXNavigation::TurnpointType::Landing);
+  }
+  {
+    NMEAInputLine line(",,2748616,906762,NOVO MESTO ");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_TP_ANS(line);
+    ok1(!parsing_result);
   }
 }
 
@@ -253,17 +255,24 @@ TestLXDT_ZONE()
     ok1(LXNavigation::NMEAv2::GenerateLXDT_ZONE_SET(zone) == "LXDT,SET,ZONE,2,1,1,1,90,60,309,5000,3500,174");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_ZONE_ANS("2,3,0,1,90,60,309,5000,3500,174");
-    ok1(parsing_result.id == 2);
-    ok1(parsing_result.direction == LXNavigation::Direction::ToPrevious);
-    ok1(parsing_result.is_auto_next == false);
-    ok1(parsing_result.is_line);
-    ok1(parsing_result.a1 == 90);
-    ok1(parsing_result.a2 == 60);
-    ok1(parsing_result.a21 == 309);
-    ok1(parsing_result.r1 == 5000);
-    ok1(parsing_result.r2 == 3500);
-    ok1(parsing_result.elevation == 174);
+    NMEAInputLine line("2,3,0,1,90,60,309,5000,3500,174");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_ZONE_ANS(line);
+    ok1(parsing_result);
+    ok1(parsing_result->id == 2);
+    ok1(parsing_result->direction == LXNavigation::Direction::ToPrevious);
+    ok1(parsing_result->is_auto_next == false);
+    ok1(parsing_result->is_line);
+    ok1(parsing_result->a1 == 90);
+    ok1(parsing_result->a2 == 60);
+    ok1(parsing_result->a21 == 309);
+    ok1(parsing_result->r1 == 5000);
+    ok1(parsing_result->r2 == 3500);
+    ok1(parsing_result->elevation == 174);
+  }
+  {
+    NMEAInputLine line("2,,0,,90,60,309,5000,3500,174");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_ZONE_ANS(line);
+    ok1(!parsing_result);
   }
 }
 
@@ -277,10 +286,11 @@ TestLXDT_GLIDER()
     glider.reg_no = "D-LKXD";
     glider.comp_id = "XD";
     glider.glider_class = LXNavigation::GliderClass::Open;
-    ok1(LXNavigation::NMEAv2::GenerateLXDT_GLIDER_SET(glider) == "LXDT,SET,GLIDER,D-KLXD,XD,OPEN");
+    ok1(LXNavigation::NMEAv2::GenerateLXDT_GLIDER_SET(glider) == "LXDT,SET,GLIDER,D-LKXD,XD,OPEN");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_GLIDER_ANS("JS3 15m,D-KLXD,XD,OPEN");
+    NMEAInputLine line("JS3 15m,D-KLXD,XD,OPEN");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_GLIDER_ANS(line);
     ok1(parsing_result.reg_no == "D-KLXD");
     ok1(parsing_result.comp_id == "XD");
     ok1(parsing_result.polar_name == "JS3 15m");
@@ -299,7 +309,8 @@ TestLXDT_PILOT()
     ok1(LXNavigation::NMEAv2::GenerateLXDT_PILOT_SET(pilot) == "LXDT,SET,PILOT,ACE,FLYER");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_PILOT_ANS("ACE,FLYER");
+    NMEAInputLine line("ACE,FLYER");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_PILOT_ANS(line);
     ok1(parsing_result.name == "ACE");
     ok1(parsing_result.surname == "FLYER");
   }
@@ -308,19 +319,21 @@ TestLXDT_PILOT()
 static void
 TestLXDT_TSK_PAR()
 {
-  ok1(LXNavigation::NMEAv2::GenerateLXDT_TSK_PAR_GET() == "GET,TSK_PAR");
+  ok1(LXNavigation::NMEAv2::GenerateLXDT_TSK_PAR_GET() == "LXDT,GET,TSK_PAR");
   {
     LXNavigation::TaskParameters task;
     task.finish_1000 = true;
-    task.finish_alt_offset = 0;
-    task.aat_time_sec = 9000;
-    ok1(LXNavigation::NMEAv2::GenerateLXDT_TSK_PAR_SET(task) == "SET,TSK_PAR,1,,02:30");
+    task.finish_alt_offset = 5;
+    task.aat_time.SetASCII("02:30");
+    ok1(LXNavigation::NMEAv2::GenerateLXDT_TSK_PAR_SET(task) == "LXDT,SET,TSK_PAR,1,5,02:30");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_TSK_PAR_ANS("1,700,02:30");
-    ok1(parsing_result.finish_1000);
-    ok1(parsing_result.finish_alt_offset == 700);
-    ok1(equals(parsing_result.aat_time_sec, 9000));
+    NMEAInputLine line("1,700,02:30");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_TSK_PAR_ANS(line);
+    ok1(parsing_result);
+    ok1(parsing_result->finish_1000);
+    ok1(parsing_result->finish_alt_offset == 700);
+    ok1(parsing_result->aat_time == "02:30");
   }
 }
 
@@ -331,19 +344,23 @@ TestLXDT_MC_BAL()
   {
     LXNavigation::GlideParameters glider_parameters;
     LXNavigation::DeviceParameters device_parameters;
-    glider_parameters.mc_ready =1.1;
-    glider_parameters.load_factor = 200;
+    glider_parameters.mac_cready = 1.1;
+    glider_parameters.load_factor = 1.44;
     glider_parameters.bugs = 30;
     device_parameters.brightness = 55;
     device_parameters.vario_vol = 70;
     device_parameters.sc_vol = 20;
-    ok1(LXNavigation::NMEAv2::GenerateLXDT_MC_BAL_SET(std::make_pair(glider_parameters, device_parameters)) == "SET,MC_BAL,1.1,200,30,55,70,20");
+    ok1(LXNavigation::NMEAv2::GenerateLXDT_MC_BAL_SET(std::make_pair(glider_parameters, device_parameters)) == "LXDT,SET,MC_BAL,1.1,1.44,30,55,70,20");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_MC_BAL_ANS("1.1,200,30,55,70,20");
-    ok1(equals(parsing_result.first.mc_ready, 1.1));
-    ok1(parsing_result.first.load_factor == 200);
-    ok1(parsing_result.first.bugs == 30);
+    NMEAInputLine line("1.1,1.44,30,55,70,20");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_MC_BAL_ANS(line);
+    ok1(parsing_result.first.mac_cready);
+    ok1(equals(*parsing_result.first.mac_cready, 1.1));
+    ok1(parsing_result.first.load_factor);
+    ok1(equals(*parsing_result.first.load_factor, 1.44));
+    ok1(parsing_result.first.bugs);
+    ok1(*parsing_result.first.bugs == 30);
     ok1(parsing_result.second.brightness == 55);
     ok1(parsing_result.second.vario_vol == 70);
     ok1(parsing_result.second.sc_vol == 20);
@@ -364,12 +381,19 @@ TestLXDT_RADIO()
     ok1(LXNavigation::NMEAv2::GenerateLXDT_RADIO_SET(radio) == "LXDT,SET,RADIO,118.475,121.500,9,8,7");
   }
   {
-    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_RADIO_ANS("128.800,118.475,10,5,33");
-    ok1(equals(parsing_result.active_freq, 128.800));
-    ok1(equals(parsing_result.standby_freq, 118.475));
-    ok1(parsing_result.volume == 10);
-    ok1(parsing_result.squelch == 5);
-    ok1(parsing_result.vox == 33);
+    NMEAInputLine line("128.800,118.475,10,5,33");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_RADIO_ANS(line);
+    ok1(parsing_result);
+    ok1(equals(parsing_result->active_freq, 128.800));
+    ok1(equals(parsing_result->standby_freq, 118.475));
+    ok1(parsing_result->volume == 10);
+    ok1(parsing_result->squelch == 5);
+    ok1(parsing_result->vox == 33);
+  }
+  {
+    NMEAInputLine line("128.800,11f8.475,10,5,33");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_RADIO_ANS(line);
+    ok1(!parsing_result);
   }
 }
 
@@ -397,34 +421,39 @@ static void
 TestLXDT_FLIGHTS_NO()
 {
   ok1(LXNavigation::NMEAv2::GenerateLXDT_FLIGHTS_NO_GET() == "LXDT,GET,FLIGHTS_NO");
-  ok1(LXNavigation::NMEAv2::ParseLXDT_FLIGHTS_NO_ANS("9") == 9);
+  NMEAInputLine line("9");
+  auto result = LXNavigation::NMEAv2::ParseLXDT_FLIGHTS_NO_ANS(line);
+  ok1(result);
+  ok1(*result == 9);
 }
 
 static void
 TestLXDT_FLIGHT_INFO()
 {
   ok1(LXNavigation::NMEAv2::GenerateLXDT_FLIGHT_INFO_GET(3) == "LXDT,GET,FLIGHT_INFO,3");
-  auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_FLIGHT_INFO_ANS("1,03JLQYT1,19.03.2020"
-                                                               ",07:08:24,07:11:27,ACE,FLYER,D-KLXD,XD,0,10"
-                                                               ",1260,98");
-  ok1(parsing_result.flight_id == 1);
-  ok1(parsing_result.filename == "03JLQYT1");
-  ok1(parsing_result.date == BrokenDate(2020, 3, 19));
-  ok1(parsing_result.take_off == BrokenTime(7, 8, 24));
-  ok1(parsing_result.landing == BrokenTime(7, 11, 27));
-  ok1(parsing_result.pilot_name == "ACE");
-  ok1(parsing_result.pilot_surname == "FLYER");
-  ok1(parsing_result.reg_no == "D-KLXD");
-  ok1(parsing_result.comp_id == "XD");
-  ok1(equals(parsing_result.min_gforce, 0));
-  ok1(equals(parsing_result.max_gforce, 1));
-  ok1(parsing_result.max_alt == 1298);
-  ok1(equals(parsing_result.max_ias, 98));
+  NMEAInputLine line("1,03JLQYT1,19.03.2020"
+                     ",07:08:24,07:11:27,ACE,FLYER,D-KLXD,XD,0,10"
+                     ",1260,98");
+  auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_FLIGHT_INFO_ANS(line);
+  ok1(parsing_result);
+  ok1(parsing_result->flight_id == 1);
+  ok1(parsing_result->filename == "03JLQYT1");
+  ok1(parsing_result->date == BrokenDate(2020, 3, 19));
+  ok1(parsing_result->take_off == BrokenTime(7, 8, 24));
+  ok1(parsing_result->landing == BrokenTime(7, 11, 27));
+  ok1(parsing_result->pilot_name == "ACE");
+  ok1(parsing_result->pilot_surname == "FLYER");
+  ok1(parsing_result->reg_no == "D-KLXD");
+  ok1(parsing_result->comp_id == "XD");
+  ok1(equals(parsing_result->min_gforce, 0));
+  ok1(equals(parsing_result->max_gforce, 10));
+  ok1(parsing_result->max_alt == 1260);
+  ok1(equals(parsing_result->max_ias, 98));
 }
 
 int main(int argc, char **argv)
 {
-  plan_tests(84);
+  plan_tests(131);
 
   TestPFLX0();
   TestPFLX2();

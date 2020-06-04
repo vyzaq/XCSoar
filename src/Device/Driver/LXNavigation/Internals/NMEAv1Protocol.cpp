@@ -4,7 +4,8 @@
 #include "NMEA/InputLine.hpp"
 #include "NMEA/Info.hpp"
 #include "Units/System.hpp"
-#include "Engine/GlideSolvers/PolarCoefficients.hpp"
+
+#include <tuple>
 
 namespace LXNavigation
 {
@@ -115,7 +116,7 @@ std::tuple<GlideParameters, PolarCoefficients, int> ParseLXWP2(NMEAInputLine &li
   GlideParameters glide_parameters;
   PolarCoefficients polar{};
 
-  ReadElement(line, glide_parameters.mc_ready);
+  ReadElement(line, glide_parameters.mac_cready);
   ReadElement(line, glide_parameters.load_factor);
   ReadElement(line, glide_parameters.bugs);
 
@@ -131,7 +132,13 @@ std::tuple<GlideParameters, PolarCoefficients, int> ParseLXWP2(NMEAInputLine &li
 
 void ParseLXWP3(NMEAInputLine &line, NMEAInfo &info)
 {
-
+  // Altitude offset -> QNH
+  double value;
+  if (line.ReadChecked(value)) {
+    value = Units::ToSysUnit(-value, Unit::FEET);
+    auto qnh = AtmosphericPressure::PressureAltitudeToStaticPressure(value);
+    info.settings.ProvideQNH(qnh, info.clock);
+  }
 }
 
 }

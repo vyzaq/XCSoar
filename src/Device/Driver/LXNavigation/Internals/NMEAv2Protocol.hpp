@@ -44,30 +44,30 @@ bool IsLineMatch(const NMEAInputLine& nmea_line)
   return MatchSentence<sentence>(line) && MatchStatus<status>(line) && MatchCommand<command>(line);
 }
 
-StatusResult ParseLXDT_ANS_Status(const NMEAInputLine &line);
+Message ParseLXDT_ANS_Status(NMEAInputLine &line);
 
 Message GenerateLXDT_INFO_GET();
-DeviceInfo ParseLXDT_INFO_ANS(const NMEAInputLine &line);
+DeviceInfo ParseLXDT_INFO_ANS(NMEAInputLine &line);
 
 Message GenerateLXDT_TP_GET(u_int16_t turnpoint_id);
 Message GenerateLXDT_TP_SET(const TurnpointData& data);
-TurnpointData ParseLXDT_TP_ANS(const NMEAInputLine &line);
+std::optional<TurnpointData> ParseLXDT_TP_ANS(NMEAInputLine &line);
 
 Message GenerateLXDT_ZONE_GET(u_int16_t turnpoint_id);
 Message GenerateLXDT_ZONE_SET(const TurnpointZone& data);
-TurnpointZone ParseLXDT_ZONE_ANS(const NMEAInputLine &line);
+std::optional<TurnpointZone> ParseLXDT_ZONE_ANS(NMEAInputLine &line);
 
 Message GenerateLXDT_GLIDER_GET();
 Message GenerateLXDT_GLIDER_SET(const GliderInfo& data);
-GliderInfo ParseLXDT_GLIDER_ANS(const NMEAInputLine &line);
+GliderInfo ParseLXDT_GLIDER_ANS(NMEAInputLine &line);
 
 Message GenerateLXDT_PILOT_GET();
 Message GenerateLXDT_PILOT_SET(const PilotInfo& data);
-PilotInfo ParseLXDT_PILOT_ANS(const NMEAInputLine &line);
+PilotInfo ParseLXDT_PILOT_ANS(NMEAInputLine &line);
 
 Message GenerateLXDT_TSK_PAR_GET();
 Message GenerateLXDT_TSK_PAR_SET(const TaskParameters& data);
-TaskParameters ParseLXDT_TSK_PAR_ANS(const NMEAInputLine &line);
+std::optional<TaskParameters> ParseLXDT_TSK_PAR_ANS(NMEAInputLine &line);
 
 Message GenerateLXDT_MC_BAL_GET();
 Message GenerateLXDT_MC_BAL_SET(const std::pair<GlideParameters, DeviceParameters>& data);
@@ -75,13 +75,13 @@ std::pair<GlideParameters, DeviceParameters> ParseLXDT_MC_BAL_ANS(NMEAInputLine 
 
 Message GenerateLXDT_RADIO_GET();
 Message GenerateLXDT_RADIO_SET(const RadioParameters& data);
-RadioParameters ParseLXDT_RADIO_ANS(const NMEAInputLine &line);
+std::optional<RadioParameters> ParseLXDT_RADIO_ANS(NMEAInputLine &line);
 
 Message GenerateLXDT_FLIGHTS_NO_GET();
-int16_t ParseLXDT_FLIGHTS_NO_ANS(const NMEAInputLine &line);
+std::optional<uint16_t> ParseLXDT_FLIGHTS_NO_ANS(NMEAInputLine &line);
 
-Message GenerateLXDT_FLIGHT_INFO_GET(u_int16_t flight_index);
-FlightInfo ParseLXDT_FLIGHT_INFO_ANS(const NMEAInputLine &line);
+Message GenerateLXDT_FLIGHT_INFO_GET(uint16_t flight_index);
+std::optional<FlightInfo> ParseLXDT_FLIGHT_INFO_ANS(NMEAInputLine &line);
 
 Message GenerateLXDT_R_SWITCH_TOGGLE();
 Message GenerateLXDT_R_DUAL_SET(bool is_dual_enabled);
