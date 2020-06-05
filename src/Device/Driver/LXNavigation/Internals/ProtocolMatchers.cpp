@@ -46,6 +46,18 @@ bool MatchCommand<NMEAv2::SentenceCode::MC_BAL>(NMEAInputLine& nmea_line)
 }
 
 template<>
+bool MatchCommand<NMEAv2::SentenceCode::OK>(NMEAInputLine& nmea_line)
+{
+  return nmea_line.ReadCompare("OK");
+}
+
+template<>
+bool MatchCommand<NMEAv2::SentenceCode::ERROR>(NMEAInputLine& nmea_line)
+{
+  return nmea_line.ReadCompare("ERROR");
+}
+
+template<>
 bool MatchStatus<NMEAv2::SentenceAction::ANS>(NMEAInputLine& nmea_line)
 {
   return nmea_line.ReadCompare("ANS");

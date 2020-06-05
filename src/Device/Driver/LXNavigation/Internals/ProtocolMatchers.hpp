@@ -48,6 +48,10 @@ template<>
 bool MatchCommand<NMEAv2::SentenceCode::INFO>(NMEAInputLine& nmea_line);
 template<>
 bool MatchCommand<NMEAv2::SentenceCode::MC_BAL>(NMEAInputLine& nmea_line);
+template<>
+bool MatchCommand<NMEAv2::SentenceCode::OK>(NMEAInputLine& nmea_line);
+template<>
+bool MatchCommand<NMEAv2::SentenceCode::ERROR>(NMEAInputLine& nmea_line);
 
 //Status specializations
 template<>

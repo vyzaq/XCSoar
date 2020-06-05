@@ -37,21 +37,21 @@ namespace LXNavigation
 
 struct BasicFlightInfo
 {
-  bool is_logger_running;
-  float tas;
-  float altitude;
-  float vario6;
-  uint16_t heading;
-  float wind_direction;
-  float wind_speed;
+  bool is_logger_running = false;
+  float tas = 0;
+  float altitude = 0;
+  float vario6 = 0;
+  uint16_t heading = 0;
+  float wind_direction = 0;
+  float wind_speed = 0;
 };
 
 struct DeviceInfo
 {
-  NarrowString<60> name;
-  uint32_t serial;
-  double sw_version;
-  double hw_version;
+  NarrowString<60> name = {};
+  uint32_t serial = 0;
+  double sw_version = 0;
+  double hw_version = 0;
 };
 
 struct GlideParameters
@@ -77,16 +77,16 @@ enum class SpeedCommandSwitchMode
 
 struct SpeedCommandParameters
 {
-  int16_t alt_offset;
-  SpeedCommandMode sc_mode;
-  float filter;
-  uint16_t te_level;
-  uint16_t int_time;
-  uint8_t range;
-  float silence;
-  SpeedCommandSwitchMode switch_mode;
-  uint16_t speed;
-  NarrowString<60> polar_name;
+  int16_t alt_offset = 0;
+  SpeedCommandMode sc_mode = SpeedCommandMode::Manual;
+  float filter = 0;
+  uint16_t te_level = 0;
+  uint16_t int_time = 0;
+  uint8_t range = 0;
+  float silence = 0;
+  SpeedCommandSwitchMode switch_mode = SpeedCommandSwitchMode::Toggle;
+  uint16_t speed = 0;
+  NarrowString<60> polar_name = {};
 };
 
 enum class TurnpointType
@@ -100,11 +100,11 @@ struct TurnpointData
 {
   static constexpr uint8_t max_points = 12;
 
-  uint16_t id;
-  uint8_t total_tp_count; //set only
-  TurnpointType type; //get only
-  GeoPoint location;
-  NarrowString<30> name;
+  uint16_t id = 0;
+  uint8_t total_tp_count = 0; //set only
+  TurnpointType type = TurnpointType::Point; //get only
+  GeoPoint location = {};
+  NarrowString<30> name = {};
 };
 
 enum class Direction
@@ -118,16 +118,16 @@ enum class Direction
 
 struct TurnpointZone
 {
-  uint16_t id;
-  Direction direction;
-  bool is_auto_next;
-  bool is_line;
-  uint16_t a1;
-  uint16_t a2;
-  uint16_t a21;
-  uint16_t r1;
-  uint16_t r2;
-  uint16_t elevation;
+  uint16_t id = 0;
+  Direction direction = Direction::Symmetric;
+  bool is_auto_next = false;
+  bool is_line = false;
+  uint16_t a1 = 0;
+  uint16_t a2 = 0;
+  uint16_t a21 = 0;
+  uint16_t r1 = 0;
+  uint16_t r2 = 0;
+  uint16_t elevation = 0;
 };
 
 enum class GliderClass
@@ -144,23 +144,23 @@ enum class GliderClass
 
 struct GliderInfo
 {
-  NarrowString<13> polar_name;
-  NarrowString<32> reg_no;
-  NarrowString<5> comp_id;
-  GliderClass glider_class;
+  NarrowString<13> polar_name = {};
+  NarrowString<32> reg_no = {};
+  NarrowString<5> comp_id = {};
+  GliderClass glider_class = GliderClass::None;
 };
 
 struct PilotInfo
 {
-  NarrowString<64> name;
-  NarrowString<64> surname;
+  NarrowString<64> name = {};
+  NarrowString<64> surname = {};
 };
 
 struct TaskParameters
 {
-  bool finish_1000;
-  uint16_t finish_alt_offset;
-  NarrowString<6> aat_time;
+  bool finish_1000 = false;
+  uint16_t finish_alt_offset = 0;
+  NarrowString<6> aat_time = {};
 };
 
 struct DeviceParameters
@@ -172,28 +172,28 @@ struct DeviceParameters
 
 struct RadioParameters
 {
-  double active_freq;
-  double standby_freq;
-  int volume;
-  int squelch;
-  int vox;
+  double active_freq = 0;
+  double standby_freq = 0;
+  int volume = 0;
+  int squelch = 0;
+  int vox = 0;
 };
 
 struct FlightInfo
 {
-  uint16_t flight_id;
-  NarrowString<10> filename;
-  BrokenDate date;
-  BrokenTime take_off;
-  BrokenTime landing;
-  NarrowString<13> pilot_name;
-  NarrowString<13> pilot_surname;
-  NarrowString<9> reg_no;
-  NarrowString<9> comp_id;
-  float min_gforce;
-  float max_gforce;
-  uint16_t max_alt;
-  double max_ias;
+  uint16_t flight_id = 0;
+  NarrowString<10> filename = {};
+  BrokenDate date = {};
+  BrokenTime take_off = {};
+  BrokenTime landing = {};
+  NarrowString<13> pilot_name = {};
+  NarrowString<13> pilot_surname = {};
+  NarrowString<9> reg_no = {};
+  NarrowString<9> comp_id = {};
+  float min_gforce = 0;
+  float max_gforce = 0;
+  uint16_t max_alt = 0;
+  double max_ias = 0;
 };
 
 }

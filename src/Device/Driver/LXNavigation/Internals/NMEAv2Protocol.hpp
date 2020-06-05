@@ -37,6 +37,10 @@ namespace LXNavigation
 {
 namespace NMEAv2
 {
+extern const char* LXDT_ANS_OK;
+extern const char* LXDT_ANS_FLIGHTS_NO;
+extern const char* LXDT_ANS_FLIGHT_INFO;
+
 template<Sentences sentence, SentenceCode command, SentenceAction status>
 bool IsLineMatch(const NMEAInputLine& nmea_line)
 {

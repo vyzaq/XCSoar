@@ -84,11 +84,10 @@ TurnpointZone ConvertToZone(const Declaration::TurnPoint &turnpoint)
     zone.a1 = 45;
     break;
   case Declaration::TurnPoint::LINE:
+    zone.direction = Direction::ToPrevious;
     zone.is_line = true;
-    zone.r1 = turnpoint.radius;
+    zone.r1 = turnpoint.radius*2;
     break;
-    break;
-
   }
   return zone;
 }
@@ -96,12 +95,29 @@ TurnpointZone ConvertToZone(const Declaration::TurnPoint &turnpoint)
 int GetNumberOfFlights(Port &port, PortNMEAReader &reader,
                        OperationEnvironment &env, TimeoutClock timeout)
 {
-  return -1;
+  reader.Flush();
+  if(!PortWriteNMEA(port, NMEAv2::GenerateLXDT_FLIGHTS_NO_GET(), env))
+    return -1;
+  port.Drain();
+  auto result = reader.ExpectLine(NMEAv2::LXDT_ANS_FLIGHTS_NO, timeout);
+  if(!result)
+    return -1;
+
+  NMEAInputLine line(result);
+  line.Skip();
+  auto number_of_flights = NMEAv2::ParseLXDT_FLIGHTS_NO_ANS(line);
+  return number_of_flights ? *number_of_flights : -1;
 }
 
-FlightInfo WaitAndReadFlightInfo(PortNMEAReader& reader)
+std::optional<FlightInfo> WaitAndReadFlightInfo(PortNMEAReader& reader, TimeoutClock timeout)
 {
-  return {};
+  reader.Flush();
+  auto result = reader.ExpectLine(NMEAv2::LXDT_ANS_FLIGHT_INFO, timeout);
+  if(!result)
+    return {};
+  NMEAInputLine line(result);
+  line.Skip();
+  return NMEAv2::ParseLXDT_FLIGHT_INFO_ANS(line);
 }
 
 void DeviceInfoIntoNMEA(const DeviceInfo& device_info, NMEAInfo& info)
@@ -206,6 +222,14 @@ LXNavigationDevice::ParseNMEA(const char *string, NMEAInfo &info)
       ConvertToNMEAInfo(parameters.second, info);
       return true;
     }
+    else if(NMEAv2::IsLineMatch<Sentences::LXDT, NMEAv2::SentenceCode::OK, NMEAv2::SentenceAction::ANS>(nmea_line))
+    {
+      return true;
+    }
+    else if(NMEAv2::IsLineMatch<Sentences::LXDT, NMEAv2::SentenceCode::ERROR, NMEAv2::SentenceAction::ANS>(nmea_line))
+    {
+      return true;
+    }
     break;
   }
   default:
@@ -271,34 +295,63 @@ LXNavigationDevice::Declare(const Declaration &declaration, const Waypoint *home
 {
   if(declaration.turnpoints.size() > TurnpointData::max_points)
     return false;
+  env.SetProgressRange(declaration.turnpoints.size() + 2 + home ? 1 : 0);
+  unsigned current_progress = 0;
+  env.SetProgressPosition(current_progress);
+  port.StopRxThread();
 
   {
     PilotInfo pilot_info;
     pilot_info.name = declaration.pilot_name; //split in the space?
     PortWriteNMEA(port, NMEAv2::GenerateLXDT_PILOT_SET(pilot_info), env);
+    env.SetProgressPosition(++current_progress);
+    port.Drain();
+    if(!port.ExpectString(NMEAv2::LXDT_ANS_OK, env))
+      return false;
   }
   {
     GliderInfo glider_info;
     glider_info.reg_no = declaration.aircraft_registration;
     glider_info.comp_id = declaration.competition_id;
     PortWriteNMEA(port, NMEAv2::GenerateLXDT_GLIDER_SET(glider_info), env);
+    env.SetProgressPosition(++current_progress);
+    port.Drain();
+    if(!port.ExpectString(NMEAv2::LXDT_ANS_OK, env))
+      return false;
   }
 
   TurnpointData data;
   auto turnpoints_quantity = declaration.turnpoints.size();
   data.total_tp_count = turnpoints_quantity + 2; // +2 because according to spec number have to append takeoff and landing
+  if(home) {
+    data.id = 0;
+    data.name.SetASCII(home->name.c_str());
+    data.location = home->location;
+    PortWriteNMEA(port, NMEAv2::GenerateLXDT_TP_SET(data), env);
+    env.SetProgressPosition(++current_progress);
+    port.Drain();
+    if(!port.ExpectString(NMEAv2::LXDT_ANS_OK, env))
+      return false;
+  }
+
   for(unsigned i = 0; i < turnpoints_quantity; ++i)
   {
     const auto &turnpoint = declaration.turnpoints.at(i);
-
-    data.id = i;
+    data.id = i+1;
     data.name.SetASCII(turnpoint.waypoint.name.c_str());
     data.location = turnpoint.waypoint.location;
+
     PortWriteNMEA(port, NMEAv2::GenerateLXDT_TP_SET(data), env);
-    PortWriteNMEA(port, NMEAv2::GenerateLXDT_ZONE_SET(ConvertToZone(turnpoint)), env);
+    if(!port.ExpectString(NMEAv2::LXDT_ANS_OK, env))
+      return false;
+    auto zone_data = ConvertToZone(turnpoint);
+    zone_data.id = data.id;
+    PortWriteNMEA(port, NMEAv2::GenerateLXDT_ZONE_SET(zone_data), env);
+    port.Drain();
+    if(!port.ExpectString(NMEAv2::LXDT_ANS_OK, env))
+      return false;
+    env.SetProgressPosition(++current_progress);
   }
-  port.Drain();
-  //add validation of declared task (process ANS or read task from device
   return true;
 }
 
@@ -314,10 +367,10 @@ LXNavigationDevice::ReadFlightList(RecordedFlightList &flight_list, OperationEnv
 
   PortNMEAReader reader(port, env);
 
-  TimeoutClock timeout(std::chrono::seconds(2));
+  TimeoutClock timeout(std::chrono::seconds(5));
   int flights_quantity = GetNumberOfFlights(port, reader, env, timeout);
-  if (flights_quantity <= 0)
-    return flights_quantity == 0;
+  if (flights_quantity < 0)
+    return false;
 
   env.SetProgressRange(flights_quantity);
 
@@ -325,15 +378,18 @@ LXNavigationDevice::ReadFlightList(RecordedFlightList &flight_list, OperationEnv
   {
     env.SetProgressPosition(i);
     PortWriteNMEA(port, NMEAv2::GenerateLXDT_FLIGHT_INFO_GET(i+1), env);
-    auto flight_info = WaitAndReadFlightInfo(reader);
+    port.Drain();
+    auto flight_info = WaitAndReadFlightInfo(reader, timeout);
+    if(!flight_info)
+      return false;
     RecordedFlightInfo app_flight_info;
-    app_flight_info.date = flight_info.date;
-    app_flight_info.start_time = flight_info.take_off;
-    app_flight_info.end_time = flight_info.landing;
-    app_flight_info.internal.lx_navigation = flight_info.flight_id;
+    app_flight_info.date = flight_info->date;
+    app_flight_info.start_time = flight_info->take_off;
+    app_flight_info.end_time = flight_info->landing;
+    app_flight_info.internal.lx_navigation = flight_info->flight_id;
     flight_list.emplace_back(app_flight_info);
   }
-  return false;
+  return true;
 }
 
 bool

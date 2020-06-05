@@ -54,16 +54,20 @@ GliderClass GetGliderClass(const String& class_name)
 }
 }
 
+const char* LXDT_ANS_OK = "$LXDT,ANS,OK*5c";
+const char* LXDT_ANS_FLIGHTS_NO = "LXDT,ANS,FLIGHTS_NO";
+const char* LXDT_ANS_FLIGHT_INFO = "LXDT,ANS,FLIGHT_INFO";
+
 Message ParseLXDT_ANS_Status(NMEAInputLine &line)
 {
-  Message result;
+  Message result{};
   line.Read(result.buffer(), result.capacity());
   return result;
 }
 
 Message GenerateLXDT_INFO_GET()
 {
-  Message result;
+  Message result{};
   result.SetASCII("LXDT,GET,INFO");
   return result;
 }
