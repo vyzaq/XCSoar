@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -28,15 +28,13 @@ Copyright_License {
 void
 Menu::Clear()
 {
-  for (auto i = items, end = items + MAX_ITEMS; i != end; ++i)
-    i->Clear();
+  for (auto &i : items)
+    i.Clear();
 }
 
 void
-Menu::Add(const TCHAR *label, int location, unsigned event_id)
+Menu::Add(const TCHAR *label, unsigned location, unsigned event_id)
 {
-  assert(location >= 0);
-
   if (location >= MAX_ITEMS)
     return;
 

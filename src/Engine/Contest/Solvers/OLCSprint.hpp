@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,22 +33,22 @@ public:
   /**
    * Constructor
    */
-  OLCSprint(const Trace &_trace);
+  explicit OLCSprint(const Trace &_trace) noexcept;
 
 private:
   gcc_pure
-  unsigned FindStart() const;
+  unsigned FindStart() const noexcept;
 
 protected:
   /* virtual methods from AbstractContest */
-  ContestResult CalculateResult() const override;
+  ContestResult CalculateResult() const noexcept override;
 
   /* virtual methods from NavDijkstra */
-  void AddEdges(ScanTaskPoint origin) override;
+  void AddEdges(ScanTaskPoint origin) noexcept override;
 
   /* virtual methods from ContestDijkstra */
-  void UpdateTrace(bool force) override;
-  void AddStartEdges() override;
+  void UpdateTrace(bool force) noexcept override;
+  void AddStartEdges() noexcept override;
 };
 
 #endif

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,18 +24,18 @@
 #define XCSOAR_TASK_FILE_XCSOAR_HPP
 
 #include "TaskFile.hpp"
-#include "OS/Path.hpp"
+#include "system/Path.hpp"
 
 class TaskFileXCSoar: public TaskFile
 {
 public:
   explicit TaskFileXCSoar(Path _path):TaskFile(_path) {}
 
-  virtual OrderedTask *GetTask(const TaskBehaviour &task_behaviour,
-                               const Waypoints *waypoints,
-                               unsigned index) const;
+  std::unique_ptr<OrderedTask> GetTask(const TaskBehaviour &task_behaviour,
+                                       const Waypoints *waypoints,
+                                       unsigned index) const override;
 
-  unsigned Count() {
+  unsigned Count() noexcept override {
     return 1;
   }
 };

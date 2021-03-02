@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,24 +24,11 @@
 #include "Task/Ordered/Points/OrderedTaskPoint.hpp"
 #include "Util/Tolerances.hpp"
 
-TaskGlideRequired::TaskGlideRequired(const std::vector<OrderedTaskPoint *> &tps,
-                                     const unsigned activeTaskPoint,
+TaskGlideRequired::TaskGlideRequired(TaskPoint &tp,
                                      const AircraftState &_aircraft,
                                      const GlideSettings &settings,
                                      const GlidePolar &_gp)
-  :ZeroFinder(-10, 10, TOLERANCE_GLIDE_REQUIRED),
-   tm(tps.cbegin(), tps.cend(), activeTaskPoint, settings, _gp),
-   aircraft(_aircraft)
-{
-  // Vopt at mc=0
-  tm.set_mc(0);
-}
-
-TaskGlideRequired::TaskGlideRequired(TaskPoint* tp,
-                                     const AircraftState &_aircraft,
-                                     const GlideSettings &settings,
-                                     const GlidePolar &_gp)
-  :ZeroFinder(-10, 10, TOLERANCE_GLIDE_REQUIRED),
+  :ZeroFinder(-10, 10, TOLERANCE),
    tm(tp, settings, _gp), // Vopt at mc=0
    aircraft(_aircraft)
 {

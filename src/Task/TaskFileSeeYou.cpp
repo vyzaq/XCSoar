@@ -2,7 +2,7 @@
  Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,10 +22,10 @@
  */
 
 #include "Task/TaskFileSeeYou.hpp"
-#include "Util/ExtractParameters.hpp"
-#include "Util/StringAPI.hxx"
-#include "Util/Macros.hpp"
-#include "IO/FileLineReader.hpp"
+#include "util/ExtractParameters.hpp"
+#include "util/StringAPI.hxx"
+#include "util/Macros.hpp"
+#include "io/FileLineReader.hpp"
 #include "Engine/Waypoint/Waypoints.hpp"
 #include "Waypoint/WaypointReaderSeeYou.hpp"
 #include "Task/ObservationZones/LineSectorZone.hpp"
@@ -332,12 +332,11 @@ CalcIntermediateAngle(const SeeYouTurnpointInformation &turnpoint_infos,
  * @param factType The XCSoar factory type
  * @return the XCSoar OZ
  */
-static ObservationZonePoint*
+static std::unique_ptr<ObservationZonePoint>
 CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
          unsigned pos, unsigned size, const WaypointPtr wps[],
          TaskFactoryType factType)
 {
-  ObservationZonePoint* oz = nullptr;
   const bool is_intermediate = (pos > 0) && (pos < (size - 1));
   const Waypoint *wp = &*wps[pos];
 
@@ -346,31 +345,34 @@ CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
 
   if (factType == TaskFactoryType::RACING &&
       is_intermediate && isKeyhole(turnpoint_infos))
-    oz = KeyholeZone::CreateDAeCKeyholeZone(wp->location);
+    return KeyholeZone::CreateDAeCKeyholeZone(wp->location);
 
   else if (factType == TaskFactoryType::RACING &&
       is_intermediate && isBGAEnhancedOptionZone(turnpoint_infos))
-    oz = KeyholeZone::CreateBGAEnhancedOptionZone(wp->location);
+    return KeyholeZone::CreateBGAEnhancedOptionZone(wp->location);
 
   else if (factType == TaskFactoryType::RACING &&
       is_intermediate && isBGAFixedCourseZone(turnpoint_infos))
-    oz = KeyholeZone::CreateBGAFixedCourseZone(wp->location);
+    return KeyholeZone::CreateBGAFixedCourseZone(wp->location);
 
   else if (!is_intermediate && turnpoint_infos.is_line) // special case "is_line"
-    oz = new LineSectorZone(wp->location, turnpoint_infos.radius1);
+    return std::make_unique<LineSectorZone>(wp->location,
+                                            turnpoint_infos.radius1);
 
   // special case "Cylinder"
   else if (fabs(turnpoint_infos.angle1.Degrees() - 180) < 1 )
-    oz = new CylinderZone(wp->location, turnpoint_infos.radius1);
+    return std::make_unique<CylinderZone>(wp->location,
+                                          turnpoint_infos.radius1);
 
   else if (factType == TaskFactoryType::RACING) {
 
     // XCSoar does not support fixed sectors for RT
     if (turnpoint_infos.style == SeeYouTurnpointInformation::FIXED)
-      oz = new CylinderZone(wp->location, turnpoint_infos.radius1);
+      return std::make_unique<CylinderZone>(wp->location,
+                                            turnpoint_infos.radius1);
     else
-      oz = SymmetricSectorZone::CreateFAISectorZone(wp->location,
-                                                    is_intermediate);
+      return SymmetricSectorZone::CreateFAISectorZone(wp->location,
+                                                      is_intermediate);
 
   } else if (is_intermediate) { //AAT intermediate point
     assert(wps[pos + 1]);
@@ -387,18 +389,18 @@ CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
 
     if (turnpoint_infos.radius2 > 0 &&
         (turnpoint_infos.angle2.AsBearing().Degrees()) < 1) {
-      oz = new AnnularSectorZone(wp->location, turnpoint_infos.radius1,
-          RadialStart, RadialEnd, turnpoint_infos.radius2);
+      return std::make_unique<AnnularSectorZone>(wp->location,
+                                                 turnpoint_infos.radius1,
+                                                 RadialStart, RadialEnd,
+                                                 turnpoint_infos.radius2);
     } else {
-      oz = new SectorZone(wp->location, turnpoint_infos.radius1,
-          RadialStart, RadialEnd);
+      return std::make_unique<SectorZone>(wp->location, turnpoint_infos.radius1,
+                                          RadialStart, RadialEnd);
     }
 
   } else { // catch-all
-    oz = new CylinderZone(wp->location, turnpoint_infos.radius1);
+    return std::make_unique<CylinderZone>(wp->location,turnpoint_infos.radius1);
   }
-
-  return oz;
 }
 
 /**
@@ -411,31 +413,32 @@ CreateOZ(const SeeYouTurnpointInformation &turnpoint_infos,
  * @param factType The XCSoar factory type
  * @return The point
  */
-static OrderedTaskPoint*
+static std::unique_ptr<OrderedTaskPoint>
 CreatePoint(unsigned pos, unsigned n_waypoints, WaypointPtr &&wp,
-    AbstractTaskFactory& fact, ObservationZonePoint* oz,
-    const TaskFactoryType factType)
+            AbstractTaskFactory& fact,
+            std::unique_ptr<ObservationZonePoint> oz,
+            const TaskFactoryType factType) noexcept
 {
-  OrderedTaskPoint *pt = nullptr;
+  std::unique_ptr<OrderedTaskPoint> pt;
 
   if (pos == 0)
     pt = oz
-      ? fact.CreateStart(oz, std::move(wp))
+      ? fact.CreateStart(std::move(oz), std::move(wp))
       : fact.CreateStart(std::move(wp));
 
   else if (pos == n_waypoints - 1)
     pt = oz
-      ? fact.CreateFinish(oz, std::move(wp))
+      ? fact.CreateFinish(std::move(oz), std::move(wp))
       : fact.CreateFinish(std::move(wp));
 
   else if (factType == TaskFactoryType::RACING)
     pt = oz
-      ? fact.CreateASTPoint(oz, std::move(wp))
+      ? fact.CreateASTPoint(std::move(oz), std::move(wp))
       : fact.CreateIntermediate(std::move(wp));
 
   else
     pt = oz
-      ? fact.CreateAATPoint(oz, std::move(wp))
+      ? fact.CreateAATPoint(std::move(oz), std::move(wp))
       : fact.CreateIntermediate(std::move(wp));
 
   return pt;
@@ -463,7 +466,7 @@ AdvanceReaderToTask(TLineReader &reader, const unsigned index)
   return line;
 }
 
-OrderedTask*
+std::unique_ptr<OrderedTask>
 TaskFileSeeYou::GetTask(const TaskBehaviour &task_behaviour,
                         const Waypoints *waypoints, unsigned index) const
 try {
@@ -512,7 +515,7 @@ try {
 
   ParseCUTaskDetails(reader, &task_info, turnpoint_infos);
 
-  OrderedTask *task = new OrderedTask(task_behaviour);
+  auto task = std::make_unique<OrderedTask>(task_behaviour);
   task->SetFactory(task_info.wp_dis ?
                     TaskFactoryType::RACING : TaskFactoryType::AAT);
   AbstractTaskFactory& fact = task->GetFactory();
@@ -564,17 +567,15 @@ try {
   //now create TPs and OZs
   for (unsigned i = 0; i < n_waypoints; i++) {
 
-    ObservationZonePoint* oz = CreateOZ(turnpoint_infos[i], i, n_waypoints,
-                                        waypoints_in_task, factType);
+    auto oz = CreateOZ(turnpoint_infos[i], i, n_waypoints,
+                       waypoints_in_task, factType);
     assert(waypoints_in_task[i]);
-    OrderedTaskPoint *pt = CreatePoint(i, n_waypoints,
-                                       WaypointPtr(waypoints_in_task[i]),
-                                       fact, oz, factType);
+    auto pt = CreatePoint(i, n_waypoints,
+                          WaypointPtr(waypoints_in_task[i]),
+                          fact, std::move(oz), factType);
 
     if (pt != nullptr)
       fact.Append(*pt, false);
-
-    delete pt;
   }
   return task;
 } catch (const std::runtime_error &e) {
@@ -582,7 +583,7 @@ try {
 }
 
 unsigned
-TaskFileSeeYou::Count()
+TaskFileSeeYou::Count() noexcept
 try {
   // Reset internal task name memory
   namesuffixes.clear();

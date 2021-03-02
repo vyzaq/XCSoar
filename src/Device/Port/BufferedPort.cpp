@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@ Copyright_License {
 */
 
 #include "BufferedPort.hpp"
-#include "Time/TimeoutClock.hpp"
+#include "time/TimeoutClock.hpp"
 
 #include <algorithm>
 
@@ -115,11 +115,11 @@ BufferedPort::WaitRead(std::chrono::steady_clock::duration _timeout)
   return WaitResult::READY;
 }
 
-void
-BufferedPort::DataReceived(const void *data, size_t length)
+bool
+BufferedPort::DataReceived(const void *data, size_t length) noexcept
 {
   if (running) {
-    handler.DataReceived(data, length);
+    return handler.DataReceived(data, length);
   } else {
     const uint8_t *p = (const uint8_t *)data;
 
@@ -129,7 +129,7 @@ BufferedPort::DataReceived(const void *data, size_t length)
     auto r = buffer.Write();
     if (r.size == 0)
       /* the buffer is already full, discard excess data */
-      return;
+      return true;
 
     /* discard excess data */
     size_t nbytes = std::min(length, r.size);
@@ -138,5 +138,6 @@ BufferedPort::DataReceived(const void *data, size_t length)
     buffer.Append(nbytes);
 
     cond.notify_all();
+    return true;
   }
 }

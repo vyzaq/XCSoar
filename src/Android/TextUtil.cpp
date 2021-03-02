@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,11 +22,12 @@ Copyright_License {
 */
 
 #include "TextUtil.hpp"
-#include "Java/Class.hxx"
-#include "Java/String.hxx"
-#include "Java/Exception.hxx"
-#include "Screen/Point.hpp"
+#include "java/Class.hxx"
+#include "java/String.hxx"
+#include "java/Exception.hxx"
+#include "ui/dim/Size.hpp"
 #include "Look/FontDescription.hpp"
+#include "util/StringView.hxx"
 #include "Asset.hpp"
 
 JNIEnv *TextUtil::env;
@@ -109,7 +110,7 @@ TextUtil::create(const FontDescription &d)
 }
 
 PixelSize
-TextUtil::getTextBounds(const char *text) const
+TextUtil::getTextBounds(StringView text) const
 {
   jint extent[2];
 
@@ -130,7 +131,7 @@ TextUtil::getTextBounds(const char *text) const
 }
 
 TextUtil::Texture
-TextUtil::getTextTextureGL(const char *text) const
+TextUtil::getTextTextureGL(StringView text) const
 {
   Java::String text2(env, text);
   jintArray jresult = (jintArray)

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,9 @@
 #ifndef OBSERVATIONZONECLIENT_HPP
 #define OBSERVATIONZONECLIENT_HPP
 
-#include "Util/Compiler.h"
+#include "util/Compiler.h"
+
+#include <memory>
 
 class ObservationZonePoint;
 class OZBoundary;
@@ -34,7 +36,7 @@ struct GeoPoint;
  * Class holding an ObzervationZonePoint, directing calls to it
  */
 class ObservationZoneClient {
-  ObservationZonePoint *oz_point;
+  std::unique_ptr<ObservationZonePoint> oz_point;
 
 public:
   /**
@@ -42,12 +44,8 @@ public:
    *
    * @param _oz The OZ to store
    */
-  ObservationZoneClient(ObservationZonePoint* _oz_point):oz_point(_oz_point) {}
-
-  ~ObservationZoneClient();
-
-  ObservationZoneClient(const ObservationZoneClient &) = delete;
-  ObservationZoneClient &operator=(const ObservationZoneClient &) = delete;
+  explicit ObservationZoneClient(std::unique_ptr<ObservationZonePoint> _oz_point) noexcept;
+  ~ObservationZoneClient() noexcept;
 
   /**
    * Accessor for OZ (for modifying parameters etc)

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,7 +25,6 @@
 #include "GlidePolar.hpp"
 #include "GlideResult.hpp"
 #include "Math/ZeroFinder.hpp"
-#include "Util/Tolerances.hpp"
 
 #include <cassert>
 
@@ -324,6 +323,8 @@ MacCready::Solve(const GlideState &task) const
  */
 class MacCreadyVopt: public ZeroFinder
 {
+  static constexpr double TOLERANCE_MC_OPT_GLIDE = 0.001;
+
   GlideResult res;
   const GlideState &task;
   const MacCready &mac;

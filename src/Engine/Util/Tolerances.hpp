@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,18 +22,6 @@
 #ifndef TOLERANCES_HPP
 #define TOLERANCES_HPP
 
-#define TOLERANCE_MC_OPT_GLIDE 0.001
 #define TOLERANCE_ISOLINE_CROSSING 0.001
-#define TOLERANCE_CRUISE_EFFICIENCY 0.001
-
-#define TOLERANCE_BEST_MC 0.0001
-
-#define TOLERANCE_POLAR_MINSINK 0.01
-#define TOLERANCE_POLAR_BESTLD 0.000001
-#define TOLERANCE_POLAR_DOLPHIN 0.0001
-
-#define TOLERANCE_GLIDE_REQUIRED 0.001
-#define TOLERANCE_MIN_TARGET 0.002
-#define TOLERANCE_OPT_TARGET 0.01
 
 #endif

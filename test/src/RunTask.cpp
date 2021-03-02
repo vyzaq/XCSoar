@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@ Copyright_License {
 }
 */
 
-#include "OS/Args.hpp"
+#include "system/Args.hpp"
 #include "DebugReplay.hpp"
 #include "Task/TaskFile.hpp"
 #include "Engine/Navigation/Aircraft.hpp"
@@ -129,8 +129,7 @@ int main(int argc, char **argv)
   TaskBehaviour task_behaviour;
   task_behaviour.SetDefaults();
 
-  OrderedTask *task = TaskFile::GetTask(task_path, task_behaviour,
-                                        NULL, 0);
+  auto task = TaskFile::GetTask(task_path, task_behaviour, nullptr, 0);
   if (task == NULL) {
     fprintf(stderr, "Failed to load task\n");
     return EXIT_FAILURE;
@@ -141,7 +140,6 @@ int main(int argc, char **argv)
   const GlidePolar glide_polar(1);
 
   Run(*replay, *task, glide_polar);
-  delete task;
   delete replay;
 
   return EXIT_SUCCESS;

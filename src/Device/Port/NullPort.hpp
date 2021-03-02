@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@ Copyright_License {
 #ifndef XCSOAR_DEVICE_NULL_PORT_HPP
 #define XCSOAR_DEVICE_NULL_PORT_HPP
 
-#include "IO/DataHandler.hpp"
+#include "io/DataHandler.hpp"
 #include "Port.hpp"
 
 /**
@@ -49,7 +49,7 @@ public:
 
 private:
   /* virtual methods from class DataHandler */
-  void DataReceived(const void *data, size_t length) override;
+  bool DataReceived(const void *data, size_t length) noexcept override;
 };
 
 #endif

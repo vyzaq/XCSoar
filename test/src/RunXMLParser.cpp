@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,30 +23,29 @@ Copyright_License {
 
 #include "XML/Node.hpp"
 #include "XML/Parser.hpp"
-#include "IO/StdioOutputStream.hxx"
-#include "IO/BufferedOutputStream.hxx"
-#include "OS/Args.hpp"
+#include "io/StdioOutputStream.hxx"
+#include "io/BufferedOutputStream.hxx"
+#include "system/Args.hpp"
+#include "util/PrintException.hxx"
 
 #include <stdio.h>
 #include <stdlib.h>
 
 int main(int argc, char **argv)
-{
+try {
   Args args(argc, argv, "FILE");
   const auto path = args.ExpectNextPath();
   args.ExpectEnd();
 
-  XMLNode *node = XML::ParseFile(path);
-  if (node == NULL) {
-    fprintf(stderr, "XML parser failed\n");
-    return EXIT_FAILURE;
-  }
+  const auto node = XML::ParseFile(path);
 
   StdioOutputStream out(stdout);
   BufferedOutputStream bos(out);
-  node->Serialise(bos, true);
+  node.Serialise(bos, true);
   bos.Flush();
-  delete node;
 
   return EXIT_SUCCESS;
+} catch (...) {
+  PrintException(std::current_exception());
+  return EXIT_FAILURE;
 }

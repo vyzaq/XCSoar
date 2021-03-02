@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,13 +27,15 @@ Copyright_License {
 #include "ZzipStream.hpp"
 #include "WorldFile.hpp"
 #include "Operation/Operation.hpp"
-#include "OS/ConvertPathName.hpp"
+#include "system/ConvertPathName.hpp"
 
 extern "C" {
 #include "jasper/jp2/jp2_cod.h"
 #include "jasper/jpc/jpc_dec.h"
 #include "jasper/jpc/jpc_t1cod.h"
 }
+
+#include <string.h>
 
 long
 TerrainLoader::SkipMarkerSegment(long file_offset) const

@@ -5,6 +5,8 @@ Version 7.0 - not yet released
   - new translation: Traditional Chinese
   - new Logger-setting "CoPilot"
   - new setting "Thermal Averager needle"
+  - select position of Thermal Assistant
+  - new setting "Cruise/Circling mode switch period"
 * data files
   - optimise the terrain loader
   - support runway width in CUP files
@@ -50,6 +52,7 @@ Version 7.0 - not yet released
   - new algorithm, with improved statistics
   - separate active climb and encounter-averaged bands
 * infoboxes
+  - improved formula for the title font size
   - added ":1" unit for gradient type displays
   - new infobox: % time non-circling climb
   - new infobox: % climb chart showing proportions of time spent circling climb (gray), cruise,
@@ -71,12 +74,45 @@ Version 7.0 - not yet released
 * Raspberry Pi
   - resizable mouse cursor
 
-Version 6.8.14 - 2020/05/14
+Version 6.8.17 - 2020/09/22
+* tracking
+  - SkyLines: update tracking IP address
+* terrain
+  - fix several crash bugs (JasPer)
+
+Version 6.8.16 - 2020/07/26
+* input events
+  - fix two crash bugs with malformed files
 * user interface
-  - fix average needle color in inverted mode
+  - fix crash bug in waypoint editor
+* devices
+  - added ports 8880, 8881, 8882 to tcp-client
+* glide computer
+  - fix crash bug
+* terrain
+  - fix several crash bugs (JasPer)
+* Android
+  - fix several crash bugs
+  - fix rendering errors on very wide text lines
+
+Version 6.8.15 - 2020/06/13
+* user interface
   - vario: fix overlapping text lines
 * tracking
   - SkyLines: update tracking IP address
+* support for long-form `DTE` header in IGC files
+* Windows
+  - fix buffer overflow causing crashes in the waypoint dialog
+* Raspberry Pi
+  - support 64 bit kernels
+  - Raspberry Pi 4 support
+  - detect display dimensions and scale user interface accordingly
+* macOS
+  - add macOS Catalina font path
+
+Version 6.8.14 - 2020/05/14
+* user interface
+  - fix average needle color in inverted mode
 * Android
   - compatibility with Android 9
   - request all permissions without manual restarts

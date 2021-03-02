@@ -71,15 +71,14 @@
 * Includes.
 \******************************************************************************/
 
-#include <assert.h>
-#include <stdlib.h>
-#include <stdarg.h>
+#include "jpc_bs.h"
 
 #include "jasper/jas_malloc.h"
 #include "jasper/jas_math.h"
 #include "jasper/jas_debug.h"
 
-#include "jpc_bs.h"
+#include <assert.h>
+#include <stdlib.h>
 
 /******************************************************************************\
 * Local function prototypes.
@@ -277,7 +276,7 @@ int jpc_bitstream_fillbuf(jpc_bitstream_t *bitstream)
 
 /* Does the bit stream need to be aligned to a byte boundary (considering
   the effects of bit stuffing)? */
-int jpc_bitstream_needalign(jpc_bitstream_t *bitstream)
+int jpc_bitstream_needalign(const jpc_bitstream_t *bitstream)
 {
 	if (bitstream->openmode_ & JPC_BITSTREAM_READ) {
 		/* The bit stream is open for reading. */
@@ -306,7 +305,7 @@ int jpc_bitstream_needalign(jpc_bitstream_t *bitstream)
 }
 
 /* How many additional bytes would be output if we align the bit stream? */
-int jpc_bitstream_pending(jpc_bitstream_t *bitstream)
+int jpc_bitstream_pending(const jpc_bitstream_t *bitstream)
 {
 	if (bitstream->openmode_ & JPC_BITSTREAM_WRITE) {
 		/* The bit stream is being used for writing. */
@@ -340,7 +339,8 @@ int jpc_bitstream_align(jpc_bitstream_t *bitstream)
 	} else if (bitstream->openmode_ & JPC_BITSTREAM_WRITE) {
 		ret = jpc_bitstream_outalign(bitstream, 0);
 	} else {
-		abort();
+		assert(false);
+		JAS_UNREACHABLE();
 	}
 	return ret;
 }

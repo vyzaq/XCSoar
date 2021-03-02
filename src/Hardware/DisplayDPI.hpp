@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,7 +24,11 @@ Copyright_License {
 #ifndef XCSOAR_HARDWARE_DISPLAY_DPI_HPP
 #define XCSOAR_HARDWARE_DISPLAY_DPI_HPP
 
-#include "Util/Compiler.h"
+#include "util/Compiler.h"
+
+#if defined(USE_FB) || defined(MESA_KMS) || defined(ANDROID) || defined(USE_X11)
+#define HAVE_DPI_DETECTION
+#endif
 
 namespace Display {
   /**
@@ -33,6 +37,23 @@ namespace Display {
    * @param y Number of pixels per logical inch along the screen height
    */
   void SetForcedDPI(unsigned x_dpi, unsigned y_dpi);
+
+#ifdef HAVE_DPI_DETECTION
+/**
+ * This function gets called by our UI toolkit (the "Screen" library)
+ * after it has determined the DPI value of the screen.
+ */
+void
+ProvideDPI(unsigned x_dpi, unsigned y_dpi) noexcept;
+
+/**
+ * This function gets called by our UI toolkit (the "Screen" library)
+ * after it has determined the physical dimensions of the screen.
+ */
+void
+ProvideSizeMM(unsigned width_pixels, unsigned height_pixels,
+             unsigned width_mm, unsigned height_mm) noexcept;
+#endif
 
   /**
    * Returns the number of pixels per logical inch along the screen width

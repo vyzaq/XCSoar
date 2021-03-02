@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,27 +23,7 @@
 #include "TaskOptTarget.hpp"
 #include "Task/Ordered/Points/AATPoint.hpp"
 #include "Task/Ordered/Points/StartPoint.hpp"
-#include "Util/Tolerances.hpp"
-#include "Util/Clamp.hpp"
-
-TaskOptTarget::TaskOptTarget(const std::vector<OrderedTaskPoint*>& tps,
-                             const unsigned activeTaskPoint,
-                             const AircraftState &_aircraft,
-                             const GlideSettings &settings,
-                             const GlidePolar &_gp,
-                             AATPoint &_tp_current,
-                             const FlatProjection &projection,
-                             StartPoint *_ts)
-  :ZeroFinder(0.02, 0.98, TOLERANCE_OPT_TARGET),
-   tm(tps.cbegin(), tps.cend(), activeTaskPoint, settings, _gp,
-      /* ignore the travel to the start point */
-      false),
-   aircraft(_aircraft),
-   tp_start(_ts),
-   tp_current(_tp_current),
-   iso(_tp_current, projection)
-{
-}
+#include "util/Clamp.hpp"
 
 double
 TaskOptTarget::f(const double p)
@@ -90,5 +70,5 @@ TaskOptTarget::SetTarget(const double p)
 {
   const GeoPoint loc = iso.Parametric(Clamp(p, xmin, xmax));
   tp_current.SetTarget(loc);
-  tp_start->ScanDistanceRemaining(aircraft.location);
+  tp_start.ScanDistanceRemaining(aircraft.location);
 }

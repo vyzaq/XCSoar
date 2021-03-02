@@ -13,9 +13,12 @@ jobs:
             ccache \
             ffmpeg \
             gettext \
+            libsodium-dev \
             libasound2-dev \
             libgeotiff-dev \
             libgl1-mesa-dev \
+            libglvnd-dev \
+            libc-ares-dev \
             liblua5.2-dev \
             librsvg2-bin \
             quilt \

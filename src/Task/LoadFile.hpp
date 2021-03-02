@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,12 +23,17 @@
 #ifndef TASK_LOAD_FILE_HPP
 #define TASK_LOAD_FILE_HPP
 
+#include <memory>
+
 class Path;
 class OrderedTask;
 class Waypoints;
 struct TaskBehaviour;
 
-OrderedTask *
+/**
+ * Throws on error.
+ */
+std::unique_ptr<OrderedTask>
 LoadTask(Path path, const TaskBehaviour &task_behaviour,
          const Waypoints *waypoints=nullptr);
 

@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,11 +24,11 @@
 #include "Task/TaskBehaviour.hpp"
 
 IntermediateTaskPoint::IntermediateTaskPoint(TaskPointType _type,
-                                             ObservationZonePoint *_oz,
+                                             std::unique_ptr<ObservationZonePoint> &&_oz,
                                              WaypointPtr &&wp,
                                              const TaskBehaviour &tb,
                                              const bool b_scored)
-  :OrderedTaskPoint(_type, _oz, std::move(wp), b_scored),
+  :OrderedTaskPoint(_type, std::move(_oz), std::move(wp), b_scored),
    safety_height(tb.safety_height_arrival) {}
 
 void

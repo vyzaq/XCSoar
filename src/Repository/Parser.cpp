@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,9 +23,15 @@ Copyright_License {
 
 #include "Parser.hpp"
 #include "FileRepository.hpp"
-#include "IO/LineReader.hpp"
-#include "Util/StringStrip.hxx"
+#include "io/LineReader.hpp"
+#include "util/StringStrip.hxx"
+#include "util/HexString.hpp"
 
+/**
+ * Parses a line of the repository file.
+ * Each line is of the form `name = value`
+ * @returns A pointer to the value field.
+ */
 static const char *
 ParseLine(char *line)
 {
@@ -102,6 +108,12 @@ ParseFileRepository(FileRepository &repository, NLineReader &reader)
       int year, month, day;
       sscanf(value, "%04u-%02u-%02u", &year, &month, &day);
       file.update_date = BrokenDate(year, month, day);
+    } else if (StringIsEqual(name, "sha256")) {
+      try {
+        file.sha256_hash = ParseHexString<32>(std::string_view(value));
+      } catch (std::exception &e) {
+        // Parsing failed, sha256_hash stays zeroed
+      }
     }
   }
 

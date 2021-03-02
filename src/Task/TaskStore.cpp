@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@ Copyright_License {
 #include "Task/TaskFile.hpp"
 #include "Engine/Task/Ordered/OrderedTask.hpp"
 #include "Components.hpp"
-#include "OS/FileUtil.hpp"
-#include "OS/Path.hpp"
+#include "system/FileUtil.hpp"
+#include "system/Path.hpp"
 #include "LocalPath.hpp"
 #include "Language/Language.hpp"
 
@@ -96,17 +96,13 @@ TaskStore::Scan(bool extra)
   std::sort(store.begin(), store.end());
 }
 
-TaskStore::Item::~Item()
-{
-  if (!filename.IsNull())
-    delete task;
-}
+TaskStore::Item::~Item() noexcept = default;
 
 const OrderedTask *
-TaskStore::Item::GetTask(const TaskBehaviour &task_behaviour)
+TaskStore::Item::GetTask(const TaskBehaviour &task_behaviour) noexcept
 {
   if (task != nullptr)
-    return task;
+    return task.get();
 
   if (valid)
     task = TaskFile::GetTask(filename, task_behaviour,
@@ -117,7 +113,7 @@ TaskStore::Item::GetTask(const TaskBehaviour &task_behaviour)
   else
     task->UpdateGeometry();
 
-  return task;
+  return task.get();
 }
 
 const TCHAR *

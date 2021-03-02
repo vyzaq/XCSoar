@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@ Copyright_License {
 */
 
 #include "LineSplitter.hpp"
-#include "Util/TextFile.hxx"
-#include "Util/StringStrip.hxx"
+#include "util/TextFile.hxx"
+#include "util/StringStrip.hxx"
 
 #include <algorithm>
 
@@ -45,8 +45,8 @@ SanitiseLine(char *const begin, char *const end)
   std::replace_if(begin, end, IsInsaneChar, ' ');
 }
 
-void
-PortLineSplitter::DataReceived(const void *_data, size_t length)
+bool
+PortLineSplitter::DataReceived(const void *_data, size_t length) noexcept
 {
   assert(_data != nullptr);
   assert(length > 0);
@@ -89,7 +89,10 @@ PortLineSplitter::DataReceived(const void *_data, size_t length)
       while ((nul = memchr(line, 0, end - line)) != nullptr)
         line = (char *)nul + 1;
 
-      LineReceived(line);
+      if (!LineReceived(line))
+        return false;
     }
   } while (data < end);
+
+  return true;
 }

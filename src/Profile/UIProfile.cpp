@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -45,6 +45,7 @@ Profile::Load(const ProfileMap &map, DisplaySettings &settings)
 {
   map.GetEnum(ProfileKeys::MapOrientation, settings.orientation);
   map.Get(ProfileKeys::CursorSize, settings.cursor_size);
+  map.Get(ProfileKeys::CursorColorsInverted, settings.invert_cursor_colors);
 }
 
 void
@@ -130,8 +131,14 @@ Profile::Load(const ProfileMap &map, UISettings &settings)
   if (settings.custom_dpi < 120 || settings.custom_dpi > 520)
     settings.custom_dpi = 0;
 
-  map.Get(ProfileKeys::EnableTAGauge, settings.enable_thermal_assistant_gauge);
-
+  /* Migrate old data if TA enabled */
+  if (!map.GetEnum(ProfileKeys::TAPosition, settings.thermal_assistant_position)) {
+    bool enable_thermal_assistant_gauge_obsolete;
+    map.Get(ProfileKeys::EnableTAGauge, enable_thermal_assistant_gauge_obsolete);
+    enable_thermal_assistant_gauge_obsolete ?
+      settings.thermal_assistant_position = UISettings::ThermalAssistantPosition::BOTTOM_LEFT :
+      settings.thermal_assistant_position = UISettings::ThermalAssistantPosition::OFF;
+  }
   map.Get(ProfileKeys::AirspaceWarningDialog, settings.enable_airspace_warning_dialog);
 
   map.GetEnum(ProfileKeys::AppStatusMessageAlignment, settings.popup_message_position);
