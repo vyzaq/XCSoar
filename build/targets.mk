@@ -5,7 +5,6 @@ TARGETS = PC WIN64 \
 	ANDROID ANDROID7 ANDROID7NEON ANDROID86 \
 	ANDROIDAARCH64 ANDROIDX64 \
 	ANDROIDFAT \
-	CYGWIN \
 	OSX64 IOS32 IOS64
 
 ifeq ($(TARGET),)
@@ -46,6 +45,9 @@ TARGET_IS_DARWIN := n
 TARGET_IS_LINUX := n
 TARGET_IS_ANDROID := n
 TARGET_IS_PI := n
+TARGET_IS_PI4 := n
+TARGET_IS_PI32 := n
+TARGET_IS_PI64 := n
 TARGET_IS_KOBO := n
 HAVE_POSIX := n
 HAVE_WIN32 := y
@@ -122,19 +124,6 @@ ifeq ($(TARGET),PC)
   WINVER = 0x0600
 endif
 
-ifeq ($(TARGET),CYGWIN)
-  TCPREFIX :=
-
-  TARGET_ARCH += -march=i586
-
-  WINVER = 0x0600
-
-  HAVE_POSIX := y
-  HAVE_WIN32 := y
-  HAVE_MSVCRT := n
-  HAVE_VASPRINTF := y
-endif
-
 ifeq ($(TARGET),OPT)
   override TARGET = UNIX
   DEBUG = n
@@ -152,10 +141,13 @@ ifeq ($(TARGET),UNIX)
   TCSUFFIX := $(LOCAL_TCSUFFIX)
   TARGET_IS_ARM = $(HOST_IS_ARM)
   TARGET_IS_PI = $(HOST_IS_PI)
+  TARGET_IS_PI4 = $(HOST_IS_PI4)
+  TARGET_IS_PI32 = $(call bool_and,$(HOST_IS_PI),$(HOST_IS_ARM))
+  TARGET_IS_PI64 = $(call bool_and,$(HOST_IS_PI),$(HOST_IS_AARCH64))
   ARMV6 = $(HOST_IS_ARMV6)
   ARMV7 = $(HOST_IS_ARMV7)
   NEON = $(HOST_HAS_NEON)
-  TARGET_IS_ARMHF := $(call bool_or,$(ARMV7),$(TARGET_IS_PI))
+  TARGET_IS_ARMHF := $(call bool_or,$(ARMV7),$(TARGET_IS_PI32))
   TARGET_HAS_MALI = $(HOST_HAS_MALI)
 endif
 
@@ -177,6 +169,7 @@ ifeq ($(TARGET),PI)
   endif
   TARGET_IS_LINUX = y
   TARGET_IS_PI = y
+  TARGET_IS_PI32 = y
   TARGET_IS_ARM = y
   TARGET_IS_ARMHF = y
   ARMV6 = y
@@ -188,6 +181,7 @@ ifeq ($(TARGET),PI2)
     PI ?= /opt/pi/root
   endif
   TARGET_IS_PI = y
+  TARGET_IS_PI32 = y
 endif
 
 ifeq ($(TARGET),CUBIE)
@@ -226,7 +220,7 @@ ifeq ($(TARGET),OSX64)
   override TARGET = UNIX
   TARGET_IS_DARWIN = y
   TARGET_IS_OSX = y
-  OSX_MIN_SUPPORTED_VERSION = 10.7
+  OSX_MIN_SUPPORTED_VERSION = 10.12
   HOST_TRIPLET = x86_64-apple-darwin
   LLVM_TARGET = $(HOST_TRIPLET)
   LIBCXX = y
@@ -312,7 +306,7 @@ ifeq ($(TARGET),UNIX)
 endif
 
 ifeq ($(TARGET),ANDROID)
-  ANDROID_NDK ?= $(HOME)/opt/android-ndk-r21b
+  ANDROID_NDK ?= $(HOME)/opt/android-ndk-r21d
 
   ANDROID_SDK_PLATFORM = android-26
   ANDROID_NDK_API = 21
@@ -414,9 +408,6 @@ endif
 ifeq ($(HAVE_WIN32),y)
   TARGET_CPPFLAGS += -DWIN32_LEAN_AND_MEAN
   TARGET_CPPFLAGS += -DNOMINMAX
-  ifeq ($(TARGET),CYGWIN)
-  TARGET_CPPFLAGS += -DWIN32
-  endif
 
   # kludge for the CURL build, which fails if _WIN32_WINNT >= 0x0600,
   # due to duplicate struct pollfd definition (winsock2.h and CURL's
@@ -442,6 +433,8 @@ ifeq ($(HAVE_WIN32),n)
 endif
 
 ifeq ($(TARGET_IS_PI),y)
+  TARGET_CPPFLAGS += -DRASPBERRY_PI
+
   ifneq ($(PI),)
     TARGET_CPPFLAGS += --sysroot=$(PI) -isystem $(PI)/usr/include/arm-linux-gnueabihf -isystem $(PI)/usr/include
   endif
@@ -519,10 +512,6 @@ ifeq ($(TARGET),PC)
   TARGET_ARCH += -mwindows -mms-bitfields
 endif
 
-ifeq ($(TARGET),CYGWIN)
-  WINDRESFLAGS += -I./Data
-endif
-
 ####### linker configuration
 
 TARGET_LDFLAGS =
@@ -538,10 +527,8 @@ ifeq ($(TARGET),PC)
 endif
 
 ifeq ($(HAVE_WIN32),y)
-  ifneq ($(TARGET),CYGWIN)
-    # link libstdc++-6.dll statically, so we don't have to distribute it
-    TARGET_LDFLAGS += -static-libstdc++ -static-libgcc
-  endif
+  # link libstdc++-6.dll statically, so we don't have to distribute it
+  TARGET_LDFLAGS += -static-libstdc++ -static-libgcc
 endif
 
 ifeq ($(HAVE_POSIX),y)
@@ -583,23 +570,11 @@ ifeq ($(TARGET),ANDROID)
 
   ifeq ($(ARMV7),y)
     TARGET_LDFLAGS += -Wl,--fix-cortex-a8
-
-    # workaround for "... uses VFP register arguments, output does not"
-    TARGET_LDFLAGS += -Wl,--no-warn-mismatch
   endif
 endif
 
 ifeq ($(HAVE_WIN32),y)
-  # for boost::asio::ip::tcp::acceptor
-  TARGET_LDLIBS += -lmswsock
-endif
-
-ifneq ($(filter PC CYGWIN,$(TARGET)),)
   TARGET_LDLIBS += -lwinmm
-endif
-
-ifeq ($(TARGET),CYGWIN)
-  TARGET_LDLIBS += -lintl
 endif
 
 ifeq ($(TARGET),UNIX)

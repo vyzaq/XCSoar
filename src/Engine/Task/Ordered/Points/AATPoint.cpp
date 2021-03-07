@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 #include "AATPoint.hpp"
 #include "Geo/Flat/FlatProjection.hpp"
 #include "Geo/Flat/FlatLine.hpp"
-#include "Util/Clamp.hpp"
+#include "util/Clamp.hpp"
 
 const GeoPoint&
 AATPoint::GetLocationRemaining() const
@@ -103,32 +103,6 @@ bool
 AATPoint::CheckTargetOutside(const AircraftState& state)
 {
   return false;
-/*
-  // this is optional, to be replaced!
-  
-  // now uses TaskOptTarget
-
-  if (!GetPrevious()->isInSector(state)) {
-    double b0s = GetPrevious()->get_location_remaining()
-      .bearing(state.Location);
-    GeoVector vst(state.Location,target_location);
-    double da = ::AngleLimit180(b0s-vst.Bearing);
-    if ((fabs(da)>2.0) && (vst.Distance>1.0)) {
-      AATIsolineIntercept ai(*this);
-      AIRCRAFT_STATE si;
-      if (ai.intercept(*this, state, 0.0, si.Location)
-          && isInSector(si)) {
-
-        // Note that this fights with auto-target
-
-        target_location = si.Location;
-
-        return true;
-      }
-    }
-  }
-  return false;
-*/
 }
 
 bool

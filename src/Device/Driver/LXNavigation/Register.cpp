@@ -28,11 +28,7 @@ Copyright_License {
 static Device *
 LXNavigationCreateOnPort(const DeviceConfig &config, Port &com_port)
 {
-  const bool uses_speed = config.UsesSpeed();
-  const unsigned baud_rate = uses_speed ? config.baud_rate : 0;
-  const unsigned bulk_baud_rate = uses_speed ? config.bulk_baud_rate : 0;
-
-  return new LXNavigation::LXNavigationDevice(com_port, baud_rate, bulk_baud_rate);
+  return new LXNavigation::LXNavigationDevice(com_port);
 }
 
 const struct DeviceRegister lx_navigation_driver = {

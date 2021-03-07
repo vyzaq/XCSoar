@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,7 +29,4 @@ TaskOZMapItem::TaskOZMapItem(int _index, const ObservationZonePoint &_oz,
   :MapItem(TASK_OZ), index(_index), oz(_oz.Clone()),
    tp_type(_tp_type), waypoint(std::move(_waypoint)) {}
 
-TaskOZMapItem::~TaskOZMapItem()
-{
-  delete oz;
-}
+TaskOZMapItem::~TaskOZMapItem() noexcept = default;

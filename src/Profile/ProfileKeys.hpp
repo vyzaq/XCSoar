@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -129,6 +129,7 @@ extern const char AppInfoBoxBorder[];
 extern const char AppAveNeedle[];
 extern const char AppAveThermalNeedle[];
 extern const char CursorSize[];
+extern const char CursorColorsInverted[];
 extern const char AutoAdvance[];
 extern const char UTCOffset[];
 extern const char UTCOffsetSigned[];
@@ -141,6 +142,7 @@ extern const char TerrainRamp[];
 extern const char EnableFLARMMap[];
 extern const char EnableFLARMGauge[];
 extern const char AutoCloseFlarmDialog[];
+extern const char TAPosition[];
 extern const char EnableTAGauge[];
 extern const char EnableThermalProfile[];
 extern const char TrailDrift[];
@@ -176,6 +178,8 @@ extern const char AbortTaskMode[];
 extern const char AutoMcMode[];
 extern const char AutoMc[];
 extern const char EnableExternalTriggerCruise[];
+extern const char CruiseToCirclingModeSwitchThreshold[];
+extern const char CirclingToCruiseModeSwitchThreshold[];
 extern const char OLCRules[];
 extern const char PredictContest[];
 extern const char Handicap[];

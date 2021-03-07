@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,10 +24,11 @@ Copyright_License {
 #ifndef TASK_STORE_HPP
 #define TASK_STORE_HPP
 
-#include "Util/Compiler.h"
-#include "OS/Path.hpp"
-#include "Util/tstring.hpp"
+#include "util/Compiler.h"
+#include "system/Path.hpp"
+#include "util/tstring.hpp"
 
+#include <memory>
 #include <vector>
 
 struct TaskBehaviour;
@@ -44,7 +45,7 @@ public:
     tstring task_name;
     AllocatedPath filename;
     unsigned task_index;
-    OrderedTask* task;
+    std::unique_ptr<OrderedTask> task;
     bool valid;
 
     Item(Path the_filename,
@@ -53,10 +54,9 @@ public:
       :task_name(_task_name),
        filename(the_filename),
        task_index(_task_index),
-       task(nullptr),
        valid(true) {}
 
-    ~Item();
+    ~Item() noexcept;
 
     Item(Item &&) = default;
     Item &operator=(Item &&) = default;
@@ -71,7 +71,7 @@ public:
       return filename;
     }
 
-    const OrderedTask *GetTask(const TaskBehaviour &task_behaviour);
+    const OrderedTask *GetTask(const TaskBehaviour &task_behaviour) noexcept;
 
     gcc_pure
     bool operator<(const TaskStore::Item &other) const {

@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,12 +21,12 @@ Copyright_License {
 }
 */
 
-#include "Net/HTTP/Session.hpp"
-#include "Net/HTTP/Request.hpp"
-#include "Net/HTTP/Handler.hpp"
-#include "Net/HTTP/Init.hpp"
-#include "OS/ConvertPathName.hpp"
-#include "Util/PrintException.hxx"
+#include "net/http/Session.hpp"
+#include "net/http/Request.hpp"
+#include "net/http/Handler.hpp"
+#include "net/http/Init.hpp"
+#include "system/ConvertPathName.hpp"
+#include "util/PrintException.hxx"
 
 #include <exception>
 #include <iostream>
@@ -42,14 +42,17 @@ class MyResponseHandler final : public Net::ResponseHandler {
 public:
   explicit MyResponseHandler(FILE *_file):file(_file) {}
 
-  void ResponseReceived(int64_t content_length) override {
+  bool ResponseReceived(int64_t content_length) noexcept override {
+    return true;
   }
 
-  void DataReceived(const void *data, size_t length) override {
+  bool DataReceived(const void *data, size_t length) noexcept override {
     fwrite(data, 1, length, stdout);
 
     if (file != nullptr)
       fwrite(data, 1, length, file);
+
+    return true;
   }
 };
 

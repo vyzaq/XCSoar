@@ -24,10 +24,10 @@ Copyright_License {
 #ifndef XCSOAR_DEVICE_DRIVER_LXNAVIGATION_DATA_HPP
 #define XCSOAR_DEVICE_DRIVER_LXNAVIGATION_DATA_HPP
 
-#include "Util/StaticString.hxx"
+#include "util/StaticString.hxx"
 #include "Geo/GeoPoint.hpp"
-#include "Time/BrokenDate.hpp"
-#include "Time/BrokenTime.hpp"
+#include "time/BrokenDate.hpp"
+#include "time/BrokenTime.hpp"
 
 #include <optional>
 #include <chrono>

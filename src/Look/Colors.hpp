@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@ Copyright_License {
 #ifndef XCSOAR_LOOK_COLORS_HPP
 #define XCSOAR_LOOK_COLORS_HPP
 
-#include "Screen/Color.hpp"
+#include "ui/canvas/Color.hpp"
 
-#ifdef TESTING
+#ifdef XCSOAR_TESTING
 static constexpr Color COLOR_XCSOAR_LIGHT = Color(0xed, 0x90, 0x90);
 static constexpr Color COLOR_XCSOAR = Color(0xd0, 0x17, 0x17);
 static constexpr Color COLOR_XCSOAR_DARK = Color(0x5d, 0x0a, 0x0a);

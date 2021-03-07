@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,13 +24,13 @@
 #include "Trace/Trace.hpp"
 #include "Cast.hpp"
 
-OLCLeague::OLCLeague(const Trace &_trace)
+OLCLeague::OLCLeague(const Trace &_trace) noexcept
   :AbstractContest(0), trace(_trace)
 {
 }
 
 void
-OLCLeague::Reset()
+OLCLeague::Reset() noexcept
 {
   AbstractContest::Reset();
   solution_classic.clear();
@@ -41,7 +41,7 @@ OLCLeague::Reset()
 }
 
 SolverResult
-OLCLeague::Solve(bool exhaustive)
+OLCLeague::Solve(bool exhaustive) noexcept
 {
   if (trace.size() < 2)
     return SolverResult::FAILED;
@@ -82,13 +82,13 @@ OLCLeague::Solve(bool exhaustive)
 }
 
 void
-OLCLeague::CopySolution(ContestTraceVector &vec) const
+OLCLeague::CopySolution(ContestTraceVector &vec) const noexcept
 {
   vec = solution;
 }
 
 ContestResult
-OLCLeague::CalculateResult() const
+OLCLeague::CalculateResult() const noexcept
 {
   ContestResult result;
   if (!solution[4].IsDefined()) {

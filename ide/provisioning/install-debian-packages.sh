@@ -15,7 +15,7 @@ apt-get install $APTOPTS make \
   git quilt zip \
   m4 automake wget \
   ttf-bitstream-vera fakeroot \
-  pkg-config
+  pkg-config cmake ninja-build
 echo
 
 echo Installing Manual dependencies...
@@ -32,13 +32,16 @@ echo
 echo Installing dependencies for the Linux target...
 apt-get install $APTOPTS make g++ \
   zlib1g-dev \
+  libsodium-dev \
   libfreetype6-dev \
   libpng-dev libjpeg-dev \
   libtiff5-dev libgeotiff-dev \
   libcurl4-openssl-dev \
+  libc-ares-dev \
   liblua5.2-dev lua5.2-dev \
   libxml-parser-perl \
   libasound2-dev \
+  libsdl2-dev \
   librsvg2-bin xsltproc \
   imagemagick gettext \
   mesa-common-dev libgl1-mesa-dev libegl1-mesa-dev \

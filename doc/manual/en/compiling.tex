@@ -92,10 +92,12 @@ The following command installs these on Debian:
 \begin{verbatim*}
 sudo apt-get install make g++ \
   zlib1g-dev \
+  libsodium-dev \
   libfreetype6-dev \
   libpng-dev libjpeg-dev \
   libtiff5-dev libgeotiff-dev \
   libcurl4-openssl-dev \
+  libc-ares-dev \
   liblua5.2-dev lua5.2-dev \
   libxml-parser-perl \
   libasound2-dev \
@@ -131,8 +133,8 @@ You may specify one of the following targets with \texttt{TARGET=x}:
 For Android, you need:
 
 \begin{itemize}
-\item \href{http://developer.android.com/sdk/}{Android SDK level 22}
-\item \href{http://developer.android.com/sdk/ndk/}{Android NDK r21b}
+\item \href{http://developer.android.com/sdk/}{Android SDK level 26}
+\item \href{http://developer.android.com/sdk/ndk/}{Android NDK r21d}
 \item \href{http://www.vorbis.com/}{Ogg Vorbis}
 \item {Java JDK 
 \begin{verbatim*}
@@ -143,7 +145,7 @@ sudo apt-get install default-jdk-headless vorbis-tools adb
 The required Android SDK components are:
 \begin{itemize}
 \item Android SDK Build-Tools 28.0.3
-\item SDK Platform 22
+\item SDK Platform 26
 \end{itemize}
 These can be installed from the Android Studio SDK Manager, or using the SDK
 command line tools:
@@ -151,12 +153,12 @@ command line tools:
 \begin{verbatim*}
 tools/bin/sdkmanager \
   "build-tools;28.0.3" \
-  "platforms;android-22"
+  "platforms;android-26"
 \end{verbatim*}
 
 The \texttt{Makefile} assumes that the Android SDK is installed in
 \verb|~/opt/android-sdk-linux| and the NDK is installed in
-\verb|~/opt/android-ndk-r21b|.  You can use the options
+\verb|~/opt/android-ndk-r21d|.  You can use the options
 \verb|ANDROID_SDK| and \verb|ANDROID_NDK| to override these paths.
 
 Load/update the IOIO source code:
@@ -217,8 +219,6 @@ Use one of the following targets:
 
 \texttt{WIN64} & Windows x64 (amd64 / x86-64) \\
 
-\texttt{CYGWIN} & Windows build with Cygwin (experimental) \\
-
 \end{tabularx}
 
 \subsection{Compiling for iOS and macOS}
@@ -251,7 +251,38 @@ To compile for macOS / x86\_64, run:
 make TARGET=OSX64 dmg
 \end{verbatim*}
 
-\subsection{Compiling for the Raspberry Pi}
+\subsection{Compiling for macOS (with Homebrew)}
+
+Install the required Homebrew packages:
+
+\begin{verbatim*}
+brew install automake autoconf libtool \
+  imagemagick ffmpeg librsvg quilt pkg-config
+\end{verbatim*}
+
+Then compile:
+
+\begin{verbatim*}
+make dmg
+\end{verbatim*}
+
+\subsection{Compiling on the Raspberry Pi 4}
+
+Install additional dependencies:
+
+\begin{verbatim*}
+apt-get install libdrm-dev libgbm-dev \
+  libgles2-mesa-dev \
+  libinput-dev
+\end{verbatim*}
+
+Compile:
+
+\begin{verbatim*}
+make
+\end{verbatim*}
+
+\subsection{Compiling for the Raspberry Pi 1-3}
 
 You need an ARM toolchain.  For example, you can use the Debian
 package \verb|g++-arm-linux-gnueabihf|:

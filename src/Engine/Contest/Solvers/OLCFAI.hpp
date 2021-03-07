@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,18 +23,18 @@
 #ifndef OLC_FAI_HPP
 #define OLC_FAI_HPP
 
-#include "OLCTriangle.hpp"
+#include "TriangleContest.hpp"
 
 /**
  * Specialisation of OLC Triangle with OLC FAI (triangle) rules
  */
-class OLCFAI : public OLCTriangle {
+class OLCFAI : public TriangleContest {
 public:
-  OLCFAI(const Trace &_trace, bool predict);
+  OLCFAI(const Trace &_trace, bool predict) noexcept;
 
 protected:
-  /* virtual methods from class OLCTriangle */
-  ContestResult CalculateResult() const override;
+  /* virtual methods from class TriangleContest */
+  ContestResult CalculateResult() const noexcept override;
 };
 
 #endif

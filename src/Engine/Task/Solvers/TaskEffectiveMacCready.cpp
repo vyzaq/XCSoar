@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -19,17 +19,8 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 }
  */
-#include "TaskEffectiveMacCready.hpp"
 
-TaskEffectiveMacCready::TaskEffectiveMacCready(const std::vector<OrderedTaskPoint *> &tps,
-                                               const unsigned activeTaskPoint,
-                                               const AircraftState &_aircraft,
-                                               const GlideSettings &settings,
-                                               const GlidePolar &gp):
-  TaskSolveTravelled(tps, activeTaskPoint, _aircraft,
-                     settings, gp, 0.001, 10.0)
-{
-}
+#include "TaskEffectiveMacCready.hpp"
 
 double
 TaskEffectiveMacCready::f(const double mc)

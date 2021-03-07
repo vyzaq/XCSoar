@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,13 +24,13 @@ Copyright_License {
 #ifndef XCSOAR_ANDROID_NATIVE_VIEW_HPP
 #define XCSOAR_ANDROID_NATIVE_VIEW_HPP
 
-#include "Java/Object.hxx"
-#include "Java/Class.hxx"
-#include "Java/String.hxx"
-#include "OS/Path.hpp"
+#include "java/Object.hxx"
+#include "java/Class.hxx"
+#include "java/String.hxx"
+#include "system/Path.hpp"
 
 #ifndef NO_SCREEN
-#include "Screen/Point.hpp"
+#include "ui/dim/Size.hpp"
 #endif
 
 #include <cassert>
@@ -40,7 +40,6 @@ class NativeView {
   Java::GlobalObject obj;
 
   unsigned width, height;
-  unsigned xdpi, ydpi;
   char product[20];
 
   static Java::TrivialClass cls;
@@ -82,26 +81,13 @@ public:
 
   NativeView(JNIEnv *_env, jobject _obj, unsigned _width, unsigned _height,
              unsigned _xdpi, unsigned _ydpi,
-             jstring _product)
-    :env(_env), obj(env, _obj),
-     width(_width), height(_height),
-     xdpi(_xdpi), ydpi(_ydpi) {
-    Java::String::CopyTo(env, _product, product, sizeof(product));
-  }
+             jstring _product) noexcept;
 
 #ifndef NO_SCREEN
   PixelSize GetSize() const {
     return { width, height };
   }
 #endif
-
-  unsigned GetXDPI() const {
-    return xdpi;
-  }
-
-  unsigned GetYDPI() const {
-    return ydpi;
-  }
 
   void SetSize(unsigned _width, unsigned _height) {
     width = _width;

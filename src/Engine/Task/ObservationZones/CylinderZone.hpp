@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -69,8 +69,10 @@ public:
     assert(radius > 0);
   }
 
-  static CylinderZone *CreateMatCylinderZone(const GeoPoint &loc) {
-    return new CylinderZone(Shape::MAT_CYLINDER, true, loc, MAT_RADIUS);
+  static auto CreateMatCylinderZone(const GeoPoint &loc) noexcept {
+    return std::unique_ptr<CylinderZone>{new CylinderZone(Shape::MAT_CYLINDER,
+                                                          true, loc,
+                                                          MAT_RADIUS)};
   }
 
   /**
@@ -109,8 +111,8 @@ public:
   bool Equals(const ObservationZonePoint &other) const override;
   GeoPoint GetRandomPointInSector(const double mag) const override;
 
-  ObservationZonePoint *Clone(const GeoPoint &_reference) const override {
-    return new CylinderZone(*this, _reference);
+  std::unique_ptr<ObservationZonePoint> Clone(const GeoPoint &_reference) const noexcept override {
+    return std::unique_ptr<ObservationZonePoint>{new CylinderZone(*this, _reference)};
   }
 };
 

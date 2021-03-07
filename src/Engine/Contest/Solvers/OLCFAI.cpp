@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,15 +22,15 @@
 
 #include "OLCFAI.hpp"
 
-OLCFAI::OLCFAI(const Trace &_trace, bool predict)
-  :OLCTriangle(_trace, true, predict, 1000)
+OLCFAI::OLCFAI(const Trace &_trace, bool predict) noexcept
+  :TriangleContest(_trace, predict, 1000)
 {
 }
 
 ContestResult
-OLCFAI::CalculateResult() const
+OLCFAI::CalculateResult() const noexcept
 {
-  ContestResult result = OLCTriangle::CalculateResult();
+  ContestResult result = TriangleContest::CalculateResult();
   // 0.3 points per km
   result.score = ApplyHandicap(result.distance * 0.0003);
   return result;

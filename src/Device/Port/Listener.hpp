@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ public:
    * The state has changed, and Port::GetState() will provide the new
    * value.
    */
-  virtual void PortStateChanged() = 0;
+  virtual void PortStateChanged() noexcept = 0;
 
   /**
    * An error has occurred, and the #Port is now permanently
@@ -42,7 +42,7 @@ public:
    * @param msg a human-readable error message (probably not
    * localised)
    */
-  virtual void PortError(const char *msg) {}
+  virtual void PortError(const char *msg) noexcept {}
 };
 
 #endif

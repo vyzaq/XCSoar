@@ -35,9 +35,9 @@ Copyright_License {
 #include "NMEA/Checksum.hpp"
 #include "NMEA/InputLine.hpp"
 #include "NMEA/Info.hpp"
-#include <OS/Path.hpp>
+#include <system/Path.hpp>
 #include "Device/Util/NMEAReader.hpp"
-#include "Time/TimeoutClock.hpp"
+#include "time/TimeoutClock.hpp"
 
 #include <utility>
 #include <chrono>
@@ -130,10 +130,8 @@ void DeviceInfoIntoNMEA(const DeviceInfo& device_info, NMEAInfo& info)
 
 }
 
-LXNavigationDevice::LXNavigationDevice(Port &communication_port, unsigned baud_rate, unsigned bulk_baud_rate)
+LXNavigationDevice::LXNavigationDevice(Port &communication_port)
     : port(communication_port)
-    , device_bulk_baud_rate(bulk_baud_rate)
-    , device_baud_rate(baud_rate)
     , state(State::UNKNOWN) {}
 
 void
@@ -145,7 +143,6 @@ bool
 LXNavigationDevice::EnableNMEA(OperationEnvironment &env)
 {
   state = State::DEVICE_INIT;
-  port.SetBaudrate(device_baud_rate);
   port.Flush();
   NMEAv1::PFLX0Request request;
   request.emplace_back(NMEAv1::FLIGHT_DATA_PARAMETERS, 1);
@@ -401,15 +398,6 @@ LXNavigationDevice::DownloadFlight(const RecordedFlightInfo &flight, Path path, 
   state = State::DOWNLOADING_FLIGHT;
   port.StopRxThread();
   port.Drain();
-  if(device_bulk_baud_rate > 0
-     && device_bulk_baud_rate != device_baud_rate) {
-    env.Sleep(std::chrono::milliseconds(100));
-    if (!port.SetBaudrate(device_bulk_baud_rate)) {
-      state = State::UNKNOWN;
-      return false;
-    }
-
-  }
   return false;
 }
 

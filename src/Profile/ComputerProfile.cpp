@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -112,6 +112,10 @@ Profile::Load(const ProfileMap &map, CirclingSettings &settings)
 {
   map.Get(ProfileKeys::EnableExternalTriggerCruise,
           settings.external_trigger_cruise_enabled);
+  map.Get(ProfileKeys::CruiseToCirclingModeSwitchThreshold,
+          settings.cruise_to_circling_mode_switch_threshold);
+  map.Get(ProfileKeys::CirclingToCruiseModeSwitchThreshold,
+          settings.circling_to_cruise_mode_switch_threshold);
 }
 
 void

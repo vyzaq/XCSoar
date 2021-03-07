@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -109,11 +109,12 @@ GlideComputerAirData::ProcessVertical(const MoreData &basic,
   wind_computer.Select(settings.wind, basic, calculated);
   wind_computer.ComputeHeadWind(basic, calculated);
 
-  thermallocator.Process(calculated.circling && calculated.turning,
-                         basic.time, basic.location,
-                         basic.netto_vario,
-                         calculated.GetWindOrZero(),
-                         calculated.thermal_locator);
+  if (basic.location_available)
+    thermallocator.Process(calculated.circling && calculated.turning,
+                           basic.time, basic.location,
+                           basic.netto_vario,
+                           calculated.GetWindOrZero(),
+                           calculated.thermal_locator);
 
   LastThermalStats(basic, calculated, last_circling);
 
@@ -212,7 +213,8 @@ GlideComputerAirData::GR(const MoreData &basic, const FlyingState &flying,
 inline void
 GlideComputerAirData::CruiseGR(const MoreData &basic, DerivedInfo &calculated)
 {
-  if (!calculated.circling && basic.NavAltitudeAvailable()) {
+  if (!calculated.circling && basic.location_available &&
+      basic.NavAltitudeAvailable()) {
     if (calculated.cruise_start_time < 0) {
       calculated.cruise_start_location = basic.location;
       calculated.cruise_start_altitude = basic.nav_altitude;

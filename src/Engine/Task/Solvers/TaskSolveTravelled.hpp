@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -25,12 +25,12 @@
 #include "TaskMacCreadyTravelled.hpp"
 #include "Math/ZeroFinder.hpp"
 
-#include <vector>
-
 /**
  *  Abstract class to solve for travelled time.
  */
 class TaskSolveTravelled : protected ZeroFinder {
+  static constexpr double TOLERANCE_CRUISE_EFFICIENCY = 0.001;
+
   const AircraftState &aircraft;
   double inv_dt;
   double dt;
@@ -49,12 +49,23 @@ public:
    * @param xmin Min value of search parameter
    * @param xmax Max value of search parameter
    */
-  TaskSolveTravelled(const std::vector<OrderedTaskPoint *> &tps,
+  template<typename T, typename A>
+  TaskSolveTravelled(T &tps,
                      unsigned activeTaskPoint,
-                     const AircraftState &_aircraft,
+                     const A &_aircraft,
                      const GlideSettings &settings, const GlidePolar &gp,
-                     double xmin,
-                     double xmax);
+                     double _xmin, double _xmax) noexcept
+    :ZeroFinder(_xmin, _xmax, TOLERANCE_CRUISE_EFFICIENCY),
+     aircraft(_aircraft),
+     tm(tps.begin(), activeTaskPoint, settings, gp)
+  {
+    dt = _aircraft.time - tps.begin()->GetEnteredState().time;
+    if (dt > 0) {
+      inv_dt = 1. / dt;
+    } else {
+      inv_dt = 0; // error!
+    }
+  }
 
 protected:
   /**

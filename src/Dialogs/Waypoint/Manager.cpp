@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -48,14 +48,7 @@ Copyright_License {
 #endif
 
 class WaypointManagerWidget final
-  : public ListWidget, private ActionListener {
-  enum Buttons {
-    NEW,
-    IMPORT,
-    EDIT,
-    SAVE,
-    DELETE,
-  };
+  : public ListWidget {
 
   Button *new_button, *edit_button, *save_button, *delete_button;
 
@@ -79,14 +72,9 @@ public:
   /* virtual methods from Widget */
   void Prepare(ContainerWindow &parent, const PixelRect &rc) override;
 
-  void Unprepare() override {
-    DeleteWindow();
-  }
-
   void Show(const PixelRect &rc) override {
     ListWidget::Show(rc);
-    UpdateList();
-    UpdateButtons();
+    Update();
   }
 
 private:
@@ -101,12 +89,14 @@ private:
 
   void OnActivateItem(unsigned index) noexcept override;
 
-  /* virtual methods from ActionListener */
-  void OnAction(int id) noexcept override;
-
 private:
   void UpdateList();
   void UpdateButtons();
+
+  void Update() noexcept {
+    UpdateList();
+    UpdateButtons();
+  }
 
   void OnWaypointNewClicked();
   void OnWaypointImportClicked();
@@ -118,11 +108,25 @@ private:
 void
 WaypointManagerWidget::CreateButtons(WidgetDialog &dialog)
 {
-  new_button = dialog.AddButton(_("New"), *this, NEW);
-  edit_button = dialog.AddButton(_("Import"), *this, IMPORT);
-  edit_button = dialog.AddButton(_("Edit"), *this, EDIT);
-  save_button = dialog.AddButton(_("Save"), *this, SAVE);
-  delete_button = dialog.AddButton(_("Delete"), *this, DELETE);
+  new_button = dialog.AddButton(_("New"), [this](){
+    OnWaypointNewClicked();
+  });
+
+  edit_button = dialog.AddButton(_("Import"), [this](){
+    OnWaypointImportClicked();
+  });
+
+  edit_button = dialog.AddButton(_("Edit"), [this](){
+    OnWaypointEditClicked(GetList().GetCursorIndex());
+  });
+
+  save_button = dialog.AddButton(_("Save"), [this](){
+    OnWaypointSaveClicked();
+  });
+
+  delete_button = dialog.AddButton(_("Delete"), [this](){
+    OnWaypointDeleteClicked(GetList().GetCursorIndex());
+  });
 }
 
 void
@@ -200,7 +204,7 @@ WaypointManagerWidget::OnWaypointNewClicked()
       way_points.Optimise();
     }
 
-    UpdateList();
+    Update();
   }
 }
 
@@ -224,7 +228,7 @@ WaypointManagerWidget::OnWaypointImportClicked()
         way_points.Optimise();
       }
 
-      UpdateList();
+      Update();
     }
   }
 }
@@ -277,33 +281,7 @@ WaypointManagerWidget::OnWaypointDeleteClicked(unsigned i)
       way_points.Optimise();
     }
 
-    UpdateList();
-  }
-}
-
-void
-WaypointManagerWidget::OnAction(int id) noexcept
-{
-  switch (Buttons(id)) {
-  case NEW:
-    OnWaypointNewClicked();
-    break;
-
-  case IMPORT:
-    OnWaypointImportClicked();
-    break;
-
-  case EDIT:
-    OnWaypointEditClicked(GetList().GetCursorIndex());
-    break;
-
-  case SAVE:
-    OnWaypointSaveClicked();
-    break;
-
-  case DELETE:
-    OnWaypointDeleteClicked(GetList().GetCursorIndex());
-    break;
+    Update();
   }
 }
 

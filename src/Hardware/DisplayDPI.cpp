@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,20 +23,15 @@ Copyright_License {
 
 #include "DisplayDPI.hpp"
 
-#ifdef ANDROID
-#include "Android/Main.hpp"
-#include "Android/NativeView.hpp"
-#endif
-
 #ifdef _WIN32
-#include "Screen/GDI/RootDC.hpp"
+#include "ui/canvas/gdi/RootDC.hpp"
 
 #include <windows.h>
 #endif
 
 #ifdef USE_X11
-#include "Event/Globals.hpp"
-#include "Event/Queue.hpp"
+#include "ui/event/Globals.hpp"
+#include "ui/event/Queue.hpp"
 
 #define Font X11Font
 #define Window X11Window
@@ -60,12 +55,18 @@ Copyright_License {
 #endif
 #endif
 
+#include <cassert>
+
 #ifndef ANDROID
   static unsigned forced_x_dpi = 0;
   static unsigned forced_y_dpi = 0;
 #endif
 
-#ifdef USE_X11
+#ifdef HAVE_DPI_DETECTION
+static unsigned detected_x_dpi = 0, detected_y_dpi = 0;
+#endif
+
+#if defined(USE_X11) || defined(HAVE_DPI_DETECTION)
 
 static constexpr unsigned
 MMToDPI(unsigned pixels, unsigned mm)
@@ -74,7 +75,9 @@ MMToDPI(unsigned pixels, unsigned mm)
   return pixels * 254 / (mm * 10);
 }
 
-#elif !defined(_WIN32) && !defined(ANDROID)
+#endif
+
+#if !defined(_WIN32) && !defined(USE_X11)
 #ifndef __APPLE__
 gcc_const
 #endif
@@ -118,6 +121,30 @@ Display::SetForcedDPI(unsigned x_dpi, unsigned y_dpi)
 #endif
 }
 
+#ifdef HAVE_DPI_DETECTION
+
+void
+Display::ProvideDPI(unsigned x_dpi, unsigned y_dpi) noexcept
+{
+  detected_x_dpi = x_dpi;
+  detected_y_dpi = y_dpi;
+}
+
+void
+Display::ProvideSizeMM(unsigned width_pixels, unsigned height_pixels,
+                       unsigned width_mm, unsigned height_mm) noexcept
+{
+  assert(width_pixels > 0);
+  assert(height_pixels > 0);
+  assert(width_mm > 0);
+  assert(height_mm > 0);
+
+  detected_x_dpi = MMToDPI(width_pixels, width_mm);
+  detected_y_dpi = MMToDPI(height_pixels, height_mm);
+}
+
+#endif
+
 unsigned
 Display::GetXDPI(unsigned custom_dpi)
 {
@@ -129,15 +156,19 @@ Display::GetXDPI(unsigned custom_dpi)
   if (custom_dpi)
     return custom_dpi;
 
+#ifdef HAVE_DPI_DETECTION
+  if (detected_x_dpi > 0)
+    return detected_x_dpi;
+#endif
+
+
 #ifdef _WIN32
   RootDC dc;
   return GetDeviceCaps(dc, LOGPIXELSX);
-#elif defined(ANDROID)
-  return native_view->GetXDPI();
 #elif defined(USE_X11)
-  assert(event_queue != nullptr);
+  assert(UI::event_queue != nullptr);
 
-  auto display = event_queue->GetDisplay();
+  auto display = UI::event_queue->GetDisplay();
   assert(display != nullptr);
 
   return MMToDPI(DisplayWidth(display, 0), DisplayWidthMM(display, 0));
@@ -157,15 +188,18 @@ Display::GetYDPI(unsigned custom_dpi)
   if (custom_dpi)
     return custom_dpi;
 
+#ifdef HAVE_DPI_DETECTION
+  if (detected_y_dpi > 0)
+    return detected_y_dpi;
+#endif
+
 #ifdef _WIN32
   RootDC dc;
   return GetDeviceCaps(dc, LOGPIXELSY);
-#elif defined(ANDROID)
-  return native_view->GetYDPI();
 #elif defined(USE_X11)
-  assert(event_queue != nullptr);
+  assert(UI::event_queue != nullptr);
 
-  auto display = event_queue->GetDisplay();
+  auto display = UI::event_queue->GetDisplay();
   assert(display != nullptr);
 
   return MMToDPI(DisplayHeight(display, 0), DisplayHeightMM(display, 0));

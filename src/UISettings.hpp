@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -52,8 +52,14 @@ struct UISettings {
   /** Override OS dpi settings */
   unsigned custom_dpi;
 
-  /** Show ThermalAssistant if circling */
-  bool enable_thermal_assistant_gauge;
+  /** Position ThermalAssistant */
+  enum class ThermalAssistantPosition: uint8_t {
+    OFF,
+    BOTTOM_LEFT,
+    BOTTOM_LEFT_AVOID_IB,
+    BOTTOM_RIGHT,
+    BOTTOM_RIGHT_AVOID_IB,
+  } thermal_assistant_position;
 
   /** Enable warning dialog */
   bool enable_airspace_warning_dialog;

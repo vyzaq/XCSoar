@@ -28,7 +28,7 @@ Copyright_License {
 #include "ProtocolMatchers.hpp"
 #include "Device/Driver/LXNavigation/Internals/LXNavigationData.hpp"
 
-#include "Util/StaticString.hxx"
+#include "util/StaticString.hxx"
 #include "NMEA/InputLine.hpp"
 #include "Engine/GlideSolvers/PolarCoefficients.hpp"
 

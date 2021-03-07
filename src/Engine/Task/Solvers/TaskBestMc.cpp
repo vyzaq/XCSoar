@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,27 +22,15 @@
 
 #include "TaskBestMc.hpp"
 #include "Task/Ordered/Points/OrderedTaskPoint.hpp"
-#include "Util/Tolerances.hpp"
 
 #include <algorithm>
 
 // @todo only engage this class if above final glide at mc=0
 
-TaskBestMc::TaskBestMc(const std::vector<OrderedTaskPoint *> &tps,
-                       const unsigned activeTaskPoint,
-                       const AircraftState &_aircraft,
-                       const GlideSettings &settings, const GlidePolar &_gp,
-                       const double _mc_min)
-  :ZeroFinder(_mc_min, 10.0, TOLERANCE_BEST_MC),
-   tm(tps.cbegin(), tps.cend(), activeTaskPoint, settings, _gp),
-   aircraft(_aircraft)
-{
-}
-
-TaskBestMc::TaskBestMc(TaskPoint *tp,
+TaskBestMc::TaskBestMc(TaskPoint &tp,
                        const AircraftState &_aircraft,
                        const GlideSettings &settings, const GlidePolar &_gp)
-  :ZeroFinder(0.1, 10.0, TOLERANCE_BEST_MC),
+  :ZeroFinder(0.1, 10.0, TOLERANCE),
    tm(tp, settings, _gp),
    aircraft(_aircraft)
 {

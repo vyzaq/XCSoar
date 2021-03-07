@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -23,8 +23,10 @@
 #ifndef XCSOAR_TASK_FILE_HPP
 #define XCSOAR_TASK_FILE_HPP
 
-#include "OS/Path.hpp"
-#include "Util/StaticArray.hxx"
+#include "system/Path.hpp"
+#include "util/StaticArray.hxx"
+
+#include <memory>
 
 #include <tchar.h>
 
@@ -50,17 +52,17 @@ public:
    * @param filename The filepath
    * @return TaskFile instance
    */
-  static TaskFile *Create(Path path);
+  static std::unique_ptr<TaskFile> Create(Path path);
 
-  static OrderedTask *GetTask(Path path,
-                              const TaskBehaviour &task_behaviour,
-                              const Waypoints *waypoints,
-                              unsigned index);
+  static std::unique_ptr<OrderedTask> GetTask(Path path,
+                                              const TaskBehaviour &task_behaviour,
+                                              const Waypoints *waypoints,
+                                              unsigned index);
 
-  virtual OrderedTask *GetTask(const TaskBehaviour &task_behaviour,
-                               const Waypoints *waypoints,
-                               unsigned index) const = 0;
-  virtual unsigned Count() = 0;
+  virtual std::unique_ptr<OrderedTask> GetTask(const TaskBehaviour &task_behaviour,
+                                               const Waypoints *waypoints,
+                                               unsigned index) const = 0;
+  virtual unsigned Count() noexcept = 0;
 
   const TCHAR *GetName(unsigned index) const;
 };

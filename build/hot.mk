@@ -16,7 +16,7 @@ HOT_SOURCES = \
 	$(SRC)/Terrain/ScanLine.cpp \
 	$(SRC)/Terrain/Intersection.cpp \
 	$(SRC)/Projection/Projection.cpp \
-	$(SRC)/Screen/Memory/Canvas.cpp \
+	$(SRC)/ui/canvas/memory/Canvas.cpp \
 	$(ENGINE_SRC_DIR)/Waypoints/Waypoints.cpp \
 	$(ENGINE_SRC_DIR)/Airspace/Airspaces.cpp \
 	$(ENGINE_SRC_DIR)/Task/Shapes/FAITriangleArea.cpp \
@@ -30,7 +30,7 @@ HOT_SOURCES = \
 	$(ENGINE_SRC_DIR)/Route/RoutePolars.cpp \
 	$(ENGINE_SRC_DIR)/Contest/Solvers/ContestDijkstra.cpp \
 	$(ENGINE_SRC_DIR)/Contest/Solvers/TraceManager.cpp \
-	$(ENGINE_SRC_DIR)/Contest/Solvers/OLCTriangle.cpp
+	$(ENGINE_SRC_DIR)/Contest/Solvers/TriangleContest.cpp
 
 $(call SRC_TO_OBJ,$(HOT_SOURCES)): OPTIMIZE += -O3
 

@@ -26,7 +26,7 @@ Copyright_License {
 
 #include "Device/Driver.hpp"
 #include "Device/SettingsMap.hpp"
-#include "Thread/Mutex.hxx"
+#include "thread/Mutex.hxx"
 #include <atomic>
 
 namespace LXNavigation
@@ -45,13 +45,11 @@ class LXNavigationDevice: public AbstractDevice
 
   Port &port;
 
-  std::atomic<unsigned> device_bulk_baud_rate;
-  std::atomic<unsigned> device_baud_rate;
   std::atomic<State> state;
   Mutex mutex;
 
 public:
-  LXNavigationDevice(Port &communication_port, unsigned baud_rate, unsigned bulk_baud_rate);
+  LXNavigationDevice(Port &communication_port);
 
 public:
   // Device interface

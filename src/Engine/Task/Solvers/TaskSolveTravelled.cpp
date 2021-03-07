@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,26 +22,6 @@
 
 #include "TaskSolveTravelled.hpp"
 #include "Task/Ordered/Points/OrderedTaskPoint.hpp"
-#include "Util/Tolerances.hpp"
-
-TaskSolveTravelled::TaskSolveTravelled(const std::vector<OrderedTaskPoint *> &tps,
-                                       const unsigned activeTaskPoint,
-                                       const AircraftState &_aircraft,
-                                       const GlideSettings &settings,
-                                       const GlidePolar &gp,
-                                       const double _xmin,
-                                       const double _xmax)
-  :ZeroFinder(_xmin, _xmax, TOLERANCE_CRUISE_EFFICIENCY),
-   aircraft(_aircraft),
-   tm(tps.cbegin(), activeTaskPoint, settings, gp)
-{
-  dt = aircraft.time - tps[0]->GetEnteredState().time;
-  if (dt > 0) {
-    inv_dt = 1. / dt;
-  } else {
-    inv_dt = 0; // error!
-  }
-}
 
 #define SOLVE_ZERO
 

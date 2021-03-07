@@ -75,8 +75,9 @@
 \******************************************************************************/
 
 #ifdef ENABLE_JASPER_MULTICOMPONENT
+#include "jpc_fix.h"
+
 #include "jasper/jas_seq.h"
-#include "jasper/jas_fix.h"
 #endif /* ENABLE_JASPER_MULTICOMPONENT */
 
 /******************************************************************************\
@@ -96,20 +97,23 @@
 \******************************************************************************/
 
 #ifdef ENABLE_JASPER_MULTICOMPONENT
+
+#ifdef JAS_ENABLE_ENCODER
 /* Calculate the forward RCT. */
 void jpc_rct(jas_matrix_t *c0, jas_matrix_t *c1, jas_matrix_t *c2);
+#endif
 
 /* Calculate the inverse RCT. */
 void jpc_irct(jas_matrix_t *c0, jas_matrix_t *c1, jas_matrix_t *c2);
 
+#ifdef JAS_ENABLE_ENCODER
 /* Calculate the forward ICT. */
 void jpc_ict(jas_matrix_t *c0, jas_matrix_t *c1, jas_matrix_t *c2);
+#endif
 
 /* Calculate the inverse ICT. */
 void jpc_iict(jas_matrix_t *c0, jas_matrix_t *c1, jas_matrix_t *c2);
 
-/* Get the synthesis weight associated with a particular component. */
-jpc_fix_t jpc_mct_getsynweight(int mctid, int cmptno);
 #endif /* ENABLE_JASPER_MULTICOMPONENT */
 
 #endif

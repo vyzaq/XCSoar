@@ -1,7 +1,7 @@
 /* Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
 #ifndef TASK_MACCREADY_HPP
 #define TASK_MACCREADY_HPP
 
-#include "Util/NonCopyable.hpp"
-#include "Util/StaticArray.hxx"
+#include "util/NonCopyable.hpp"
+#include "util/StaticArray.hxx"
 #include "GlideSolvers/GlidePolar.hpp"
 #include "GlideSolvers/GlideResult.hpp"
 
@@ -92,10 +92,13 @@ public:
   TaskMacCready(const I tps_begin, const I tps_end,
                 const unsigned _active_index,
                 const GlideSettings &_settings, const GlidePolar &gp)
-    :points(tps_begin, tps_end),
-     active_index(_active_index),
+    :active_index(_active_index),
      settings(_settings),
-     glide_polar(gp) {}
+     glide_polar(gp)
+  {
+    for (I i = tps_begin; i != tps_end; ++i)
+      points.emplace_back(&*i);
+  }
 
   /**
    * Constructor for single task points (non-ordered ones)
@@ -103,9 +106,9 @@ public:
    * @param tp Task point comprising the task
    * @param gp Glide polar to copy for calculations
    */
-  TaskMacCready(TaskPoint* tp,
+  TaskMacCready(TaskPoint &tp,
                 const GlideSettings &_settings, const GlidePolar &gp)
-    :points(1, tp),
+    :points({&tp}),
      active_index(0),
      settings(_settings),
      glide_polar(gp) {}

@@ -3,7 +3,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ Copyright_License {
 #include "NMEA/InputLine.hpp"
 #include "Units/System.hpp"
 #include "Driver/FLARM/StaticParser.hpp"
-#include "Util/CharUtil.hxx"
+#include "util/CharUtil.hxx"
 
 NMEAParser::NMEAParser()
 {
@@ -654,7 +654,7 @@ NMEAParser::GGA(NMEAInputLine &line, NMEAInfo &info)
     // If the separation doesn't appear in the sentence,
     // we can assume the GPS unit is giving ellipsoid height
     //
-    if (use_geoid) {
+    if (use_geoid && info.location_available) {
       // JMW TODO really need to know the actual device..
       geoid_separation = EGM96::LookupSeparation(info.location);
       info.gps_altitude -= geoid_separation;

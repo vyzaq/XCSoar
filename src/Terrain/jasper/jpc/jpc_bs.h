@@ -74,12 +74,13 @@
 * Includes.
 \******************************************************************************/
 
-#include <stdio.h>
-
 #include "jasper/jas_types.h"
 #include "jasper/jas_stream.h"
 
-#include "Util/Compiler.h"
+#include "util/Compiler.h"
+
+#include <assert.h>
+#include <stdio.h>
 
 /******************************************************************************\
 * Constants.
@@ -188,12 +189,12 @@ int jpc_bitstream_inalign(jpc_bitstream_t *bitstream, int fillmask,
 int jpc_bitstream_outalign(jpc_bitstream_t *bitstream, int filldata);
 
 /* Check if a bit stream needs alignment. */
-gcc_pure
-int jpc_bitstream_needalign(jpc_bitstream_t *bitstream);
+JAS_ATTRIBUTE_PURE
+int jpc_bitstream_needalign(const jpc_bitstream_t *bitstream);
 
 /* How many additional bytes would be output if the bit stream was aligned? */
-gcc_pure
-int jpc_bitstream_pending(jpc_bitstream_t *bitstream);
+JAS_ATTRIBUTE_PURE
+int jpc_bitstream_pending(const jpc_bitstream_t *bitstream);
 
 /******************************************************************************\
 * Functions/macros for querying state information for bit streams.

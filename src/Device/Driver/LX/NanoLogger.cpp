@@ -2,7 +2,7 @@
   Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -27,8 +27,10 @@
 #include "Device/Util/NMEAWriter.hpp"
 #include "Device/Util/NMEAReader.hpp"
 #include "Operation/Operation.hpp"
-#include "OS/Path.hpp"
-#include "Time/TimeoutClock.hpp"
+#include "system/Path.hpp"
+#include "io/BufferedOutputStream.hxx"
+#include "io/FileOutputStream.hxx"
+#include "time/TimeoutClock.hpp"
 #include "NMEA/InputLine.hpp"
 
 #include <algorithm>
@@ -256,7 +258,7 @@ RequestFlight(Port &port, const char *filename,
 }
 
 static bool
-HandleFlightLine(const char *_line, FILE *file,
+HandleFlightLine(const char *_line, BufferedOutputStream &os,
                  unsigned &i, unsigned &row_count_r)
 {
   NMEAInputLine line(_line);
@@ -282,16 +284,15 @@ HandleFlightLine(const char *_line, FILE *file,
 
   auto content = line.Rest();
   size_t length = content.end() - content.begin();
-  if (fwrite(content.begin(), 1, length, file) != length)
-    return false;
+  os.Write(content.begin(), length);
 
-  fputs("\r\n", file);
+  os.Write("\r\n");
   ++i;
   return true;
 }
 
 static bool
-DownloadFlightInner(Port &port, const char *filename, FILE *file,
+DownloadFlightInner(Port &port, const char *filename, BufferedOutputStream &os,
                     OperationEnvironment &env)
 {
   PortNMEAReader reader(port, env);
@@ -324,7 +325,7 @@ DownloadFlightInner(Port &port, const char *filename, FILE *file,
 
       TimeoutClock timeout(std::chrono::seconds(2));
       const char *line = reader.ExpectLine("PLXVC,FLIGHT,A,", timeout);
-      if (line == nullptr || !HandleFlightLine(line, file, i, row_count)) {
+      if (line == nullptr || !HandleFlightLine(line, os, i, row_count)) {
         if (request_retry_count > 5)
           return false;
 
@@ -361,14 +362,16 @@ Nano::DownloadFlight(Port &port, const RecordedFlightInfo &flight,
 {
   port.StopRxThread();
 
-  FILE *file = _tfopen(path.c_str(), _T("wb"));
-  if (file == nullptr)
-    return false;
+  FileOutputStream fos(path);
+  BufferedOutputStream bos(fos);
 
   bool success = DownloadFlightInner(port, flight.internal.lx.nano_filename,
-                                     file, env);
-  if (fclose(file) != 0)
-    success = false;
+                                     bos, env);
+
+  if (success) {
+    bos.Flush();
+    fos.Commit();
+  }
 
   return success;
 }

@@ -61,10 +61,10 @@
  * __END_OF_JASPER_LICENSE__
  */
 
-/*
- * Memory Allocator
- *
- * $Id$
+
+/*!
+ * @file jas_malloc.h
+ * @brief JasPer Memory Allocator
  */
 
 #ifndef JAS_MALLOC_H
@@ -77,10 +77,9 @@
 /* The configuration header file should be included first. */
 #include <jasper/jas_config.h>
 
-#include <stdlib.h>
 #include <stdio.h>
 
-#include "Util/Compiler.h"
+#include "util/Compiler.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -121,7 +120,7 @@ JAS_DLLEXPORT void *jas_realloc2(void *ptr, size_t num_elements, size_t element_
 
 JAS_DLLEXPORT void jas_set_max_mem_usage(size_t max_mem);
 
-gcc_pure
+JAS_ATTRIBUTE_PURE
 JAS_DLLEXPORT size_t jas_get_mem_usage();
 
 #endif

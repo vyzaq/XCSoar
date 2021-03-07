@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2015 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -22,13 +22,13 @@ Copyright_License {
 */
 
 #include "Key.hpp"
-#include "OS/UniqueFileDescriptor.hxx"
+#include "io/UniqueFileDescriptor.hxx"
 
 #include <stdlib.h>
 #include <string.h>
 
 #ifdef __linux__
-#include "Util/ScopeExit.hxx"
+#include "util/ScopeExit.hxx"
 
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -70,6 +70,7 @@ MakeUint64(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
 {
   return MakeUint64_64(a, b, c, d, e, f, g, h);
 }
+
 #endif
 
 static constexpr uint64_t

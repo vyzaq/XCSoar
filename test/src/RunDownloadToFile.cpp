@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -21,31 +21,42 @@ Copyright_License {
 }
 */
 
-#include "Net/HTTP/ToFile.hpp"
-#include "Net/HTTP/Session.hpp"
-#include "OS/Args.hpp"
+#include "net/http/ToFile.hpp"
+#include "net/http/Session.hpp"
+#include "system/Args.hpp"
 #include "Operation/ConsoleOperationEnvironment.hpp"
+#include "util/ConstBuffer.hxx"
+#include "util/PrintException.hxx"
 
 #include <stdio.h>
 
-int main(int argc, char **argv)
+static void
+HexPrint(ConstBuffer<void> _b) noexcept
 {
+  const auto b = ConstBuffer<uint8_t>::FromVoid(_b);
+  for (uint8_t i : b)
+    printf("%02x", i);
+}
+
+int
+main(int argc, char **argv) noexcept
+try {
   Args args(argc, argv, "URL PATH");
   const char *url = args.ExpectNext();
   const auto path = args.ExpectNextPath();
   args.ExpectEnd();
 
-  char md5_digest[33];
+  std::array<std::byte, 32> hash;
 
   ConsoleOperationEnvironment env;
 
   Net::Session session;
-  if (!Net::DownloadToFile(session, url, path,
-                           md5_digest, env)) {
-    fprintf(stderr, "Error\n");
-    return EXIT_FAILURE;
-  }
+  Net::DownloadToFile(session, url, path, &hash, env);
 
-  puts(md5_digest);
+  HexPrint({&hash, sizeof(hash)});
+  printf("\n");
   return EXIT_SUCCESS;
+} catch (const std::exception &exception) {
+  PrintException(exception);
+  return EXIT_FAILURE;
 }

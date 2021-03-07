@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ Copyright_License {
 #include "Device/Util/NMEAWriter.hpp"
 #include "NMEA/InputLine.hpp"
 #include "NMEA/Checksum.hpp"
-#include "Util/Macros.hpp"
+#include "util/Macros.hpp"
 #include "Operation/ConsoleOperationEnvironment.hpp"
 
 #include <string>
@@ -88,18 +88,20 @@ private:
   }
 
 protected:
-  virtual void DataReceived(const void *data, size_t length) {
+  bool DataReceived(const void *data, size_t length) noexcept override {
     fwrite(data, 1, length, stdout);
-    PortLineSplitter::DataReceived(data, length);
+    return PortLineSplitter::DataReceived(data, length);
   }
 
-  virtual void LineReceived(const char *_line) {
+  bool LineReceived(const char *_line) noexcept override {
     if (!VerifyNMEAChecksum(_line))
-      return;
+      return true;
 
     NMEAInputLine line(_line);
     if (line.ReadCompare("$PDVSC"))
       PDVSC(line);
+
+    return true;
   }
 };
 

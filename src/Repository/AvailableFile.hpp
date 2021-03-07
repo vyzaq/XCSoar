@@ -2,7 +2,7 @@
 Copyright_License {
 
   XCSoar Glide Computer - http://www.xcsoar.org/
-  Copyright (C) 2000-2016 The XCSoar Project
+  Copyright (C) 2000-2021 The XCSoar Project
   A detailed list of copyright holders can be found in the file "AUTHORS".
 
   This program is free software; you can redistribute it and/or
@@ -24,9 +24,9 @@ Copyright_License {
 #ifndef XCSOAR_AVAILABLE_FILE_HPP
 #define XCSOAR_AVAILABLE_FILE_HPP
 
-#include "Util/StaticString.hxx"
+#include "util/StaticString.hxx"
 #include "FileType.hpp"
-#include "Time/BrokenDate.hpp"
+#include "time/BrokenDate.hpp"
 
 #include <string>
 
@@ -54,6 +54,12 @@ struct AvailableFile {
 
   BrokenDate update_date;
 
+  /**
+  * The SHA256 hash of the contents of this file.
+  * Zeroed if no hash is available.
+  */
+  std::array<std::byte, 32> sha256_hash;
+
   bool IsEmpty() const {
     return name.empty();
   }
@@ -62,12 +68,22 @@ struct AvailableFile {
     return !name.empty() && !uri.empty();
   }
 
+  bool HasHash() const {
+    for (std::size_t i = 0; i < sha256_hash.size(); i++) {
+      if (sha256_hash[i] != std::byte{0})
+        return true;
+    }
+
+    return false;
+  }
+
   void Clear() {
     name.clear();
     uri.clear();
     area.clear();
     type = FileType::UNKNOWN;
     update_date = BrokenDate::Invalid();
+    sha256_hash.fill(std::byte{0});
   }
 
   const char *GetName() const {
