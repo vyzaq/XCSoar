@@ -21,38 +21,50 @@ Copyright_License {
 }
 */
 
-#ifndef XCSOAR_DEVICE_DRIVER_LXNAVIGATION_NMEAV1_PROTOCOL_HPP
-#define XCSOAR_DEVICE_DRIVER_LXNAVIGATION_NMEAV1_PROTOCOL_HPP
+#ifndef XCSOAR_DEVICE_DRIVER_LXNAVIGATION_BINARY_PROTOCOL_HPP
+#define XCSOAR_DEVICE_DRIVER_LXNAVIGATION_BINARY_PROTOCOL_HPP
+
+#include "LXNavigationData.hpp"
 
 #include <cstdint>
+#include <boost/container/static_vector.hpp>
 
 namespace LXNavigation
 {
 namespace Binary
 {
-enum class Codes
-{
-  STX = 0x02,
-  ACK = 0x06,
-  NACK = 0x15,
-};
+constexpr int max_packet_size = 500;
+using PacketBuffer = boost::container::static_vector<uint8_t, max_packet_size>;
 
-enum class Commands
-{
-  SYN = 0x16,
-  GET_LOGGER_INFO = 0xC4,
-  SET_TASK = 0xCA,
-  GET_TASK = 0xCB,
-  SET_CLASS = 0xD0,
-  GET_FLIGHT_INFO = 0xF0,
-  GET_FLIGHT_BLOCK = 0xF1,
-  GET_NUMBER_FLIGHTS = 0xF2,
-  SEND_TO_RADIO = 0xF3,
-  SET_OBS_ZONE = 0xF4,
-  GET_OBS_ZONE = 0xF5
-};
+constexpr int max_flight_block_size = 8192;
+using FlightBlockBuffer = boost::container::static_vector<uint8_t, max_flight_block_size>;
 
-void GetFlightBlock(uint16_t flight_id, uint16_t flight_block, uint8_t* block_data);
+bool ParseResult(const PacketBuffer& data);
+
+void GenerateLoggerInfoGet(PacketBuffer& data);
+std::optional<DeviceInfo> ParseLoggerInfo(const PacketBuffer& data);
+
+void GenerateClass(PacketBuffer& data);
+
+void GenerateTaskGet(PacketBuffer& data);
+void GenerateTask(const TurnpointDataContainer& device_info, PacketBuffer& data);
+std::optional<TurnpointDataContainer> ParseTask(const PacketBuffer& data);
+
+void GenerateFlightNumberGet(PacketBuffer& data);
+std::optional<uint16_t> ParseFlightNumber(const PacketBuffer& data);
+
+void GenerateFlightInfoGet(uint16_t flight_id, PacketBuffer& data);
+std::optional<FlightInfo> ParseFlightInfo(const PacketBuffer& data);
+
+void GenerateFlightBlockGet(uint16_t flight_id, uint16_t flight_block, PacketBuffer& data);
+void ParseFlightBlock(const FlightBlockBuffer& data, FlightBlockBuffer& block_data);
+
+void GenerateTurnpointZoneGet(PacketBuffer& data);
+void GenerateTurnpointZone(const TurnpointZone& zone, PacketBuffer& data);
+std::optional<TurnpointZone> ParseTurnpointZone(const PacketBuffer& data);
+
+void GenerateSendToRadio(PacketBuffer& data, const PacketBuffer& radio_data);
+
 }
 }
 #endif

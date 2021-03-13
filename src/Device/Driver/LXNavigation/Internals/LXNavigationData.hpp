@@ -31,6 +31,7 @@ Copyright_License {
 
 #include <optional>
 #include <chrono>
+#include <array>
 
 namespace LXNavigation
 {
@@ -106,6 +107,8 @@ struct TurnpointData
   GeoPoint location = {};
   NarrowString<30> name = {};
 };
+
+using TurnpointDataContainer = std::array<TurnpointData, TurnpointData::max_points>;
 
 enum class Direction
 {

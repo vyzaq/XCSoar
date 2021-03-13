@@ -37,6 +37,7 @@ namespace LXNavigation
 {
 namespace NMEAv2
 {
+extern const char* LXDT_ANS;
 extern const char* LXDT_ANS_OK;
 extern const char* LXDT_ANS_FLIGHTS_NO;
 extern const char* LXDT_ANS_FLIGHT_INFO;
@@ -48,7 +49,7 @@ bool IsLineMatch(const NMEAInputLine& nmea_line)
   return MatchSentence<sentence>(line) && MatchStatus<status>(line) && MatchCommand<command>(line);
 }
 
-Message ParseLXDT_ANS_Status(NMEAInputLine &line);
+std::pair<bool,Message> ParseLXDT_ANS_Status(NMEAInputLine &line);
 
 Message GenerateLXDT_INFO_GET();
 DeviceInfo ParseLXDT_INFO_ANS(NMEAInputLine &line);

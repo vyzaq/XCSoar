@@ -22,6 +22,7 @@
 
 #include "Device/Driver/LXNavigation/Internals/NMEAv1Protocol.hpp"
 #include "Device/Driver/LXNavigation/Internals/NMEAv2Protocol.hpp"
+#include "Device/Driver/LXNavigation/Internals/BinaryProtocol.hpp"
 #include "TestUtil.hpp"
 #include "NMEA/InputLine.hpp"
 #include "NMEA/Info.hpp"
@@ -188,9 +189,18 @@ TestLXBC()
 static void
 TestLXDT_ANS_Status()
 {
-  NMEAInputLine line("Parameter count mismatch");
-  auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_ANS_Status(line);
-  ok1(parsing_result == "Parameter count mismatch");
+  {
+    NMEAInputLine line("ERROR,Parameter count mismatch");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_ANS_Status(line);
+    ok1(!parsing_result.first);
+    ok1(parsing_result.second == "Parameter count mismatch");
+  }
+  {
+    NMEAInputLine line("OK");
+    auto parsing_result = LXNavigation::NMEAv2::ParseLXDT_ANS_Status(line);
+    ok1(parsing_result.first);
+    ok1(parsing_result.second == "");
+  }
 }
 
 static void
@@ -451,6 +461,225 @@ TestLXDT_FLIGHT_INFO()
   ok1(equals(parsing_result->max_ias, 98));
 }
 
+static void
+TestBinary_Common()
+{
+  {
+    LXNavigation::Binary::PacketBuffer buffer({0x06});
+    ok1(LXNavigation::Binary::ParseResult(buffer));
+  }
+  {
+    LXNavigation::Binary::PacketBuffer buffer({0x15});
+    ok1(!LXNavigation::Binary::ParseResult(buffer));
+  }
+}
+
+static void
+TestBinary_Task()
+{
+  {
+    LXNavigation::Binary::PacketBuffer buffer
+    { 0x06, // ACK
+      0x50, 0x00, //flight id - 80
+      0x31, 0x33, 0x43, 0x4C, 0x51, 0x56, 0x32, 0x32, 0x00, 0x00, //filename 13CLQV22
+      0x96, 0x86, 0x25, 0x00, // date Julian Day
+      0xd1, 0x8e, 0x00, 0x00, // time 14:54:06
+      0xd1, 0x8e, 0x00, 0x00, // landing time 14:54:06
+      0x45, 0x4d, 0x50, 0x54, 0x59, 0x00, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, // pilot name EMPTY
+      0x45, 0x4d, 0x50, 0x54, 0x59, 0x31, 0x00, 0x11, 0x11, 0x11, 0x11, 0x11, // pilot surname EMPTY1
+      0x55, 0x52, 0x2d, 0x56, 0x59, 0x00, 0x11, 0x11, // registration number UR-VYAA
+      0x41, 0x41, 0x00, 0x11, 0x11, 0x11, 0x11, 0x11, // competition ID AA
+      0x0A, // Min G-force 1.0
+      0x20, // Max G-force 3.2
+      0x13, 0x1A, // Max altitude 6675
+      0x90, 0x00, // Max IAS 144
+
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // reserved
+      0xAF, 0x33, 0x00, 0x00, // flight file size - 44851
+      0x00 // CRC
+    };
+    auto flight_info = LXNavigation::Binary::ParseFlightInfo(buffer);
+    ok1(flight_info);
+    ok1(flight_info->filename == "13CLQV22");
+    ok1(flight_info->date == BrokenDate(2021, 03, 12));
+    ok1(flight_info->take_off == BrokenTime(14, 54, 06));
+    ok1(flight_info->landing == BrokenTime(14, 54, 06));
+    ok1(flight_info->pilot_name == "EMPTY");
+    ok1(flight_info->pilot_surname == "EMPTY1");
+    ok1(flight_info->reg_no == "UR-VYAA");
+    ok1(flight_info->comp_id == "AA");
+    ok1(equals(flight_info->min_gforce, 1.0));
+    ok1(equals(flight_info->max_gforce, 3.2));
+    ok1(flight_info->max_alt == 6675);
+    ok1(flight_info->max_ias == 144);
+  }
+
+  {// NACK
+    LXNavigation::Binary::PacketBuffer buffer{ 0x15 };
+    auto flight_info = LXNavigation::Binary::ParseFlightInfo(buffer);
+    ok1(!flight_info);
+  }
+
+  {// incorrect CRC
+    LXNavigation::Binary::PacketBuffer buffer;
+    buffer.resize(92, 0);
+    buffer[0] = 0x06;
+    auto flight_info = LXNavigation::Binary::ParseFlightInfo(buffer);
+    ok1(!flight_info);
+  }
+
+  {// size mismatch
+    LXNavigation::Binary::PacketBuffer buffer(50, 0);
+    buffer[0] = 0x06;
+    auto flight_info = LXNavigation::Binary::ParseFlightInfo(buffer);
+    ok1(!flight_info);
+
+    buffer.resize(99, 0);
+    buffer[0] = 0x06;
+    flight_info = LXNavigation::Binary::ParseFlightInfo(buffer);
+    ok1(!flight_info);
+  }
+}
+
+static void
+TestBinary_Flight()
+{
+  {
+    LXNavigation::Binary::FlightBlockBuffer expected_buffer{0x01, 0x02, 0x03, 0x04, 0x05};
+    LXNavigation::Binary::FlightBlockBuffer buffer{0x06, 0x05, 0x00, 0x00, 0x00};
+    buffer.insert(std::end(buffer), std::begin(expected_buffer), std::end(expected_buffer));
+    buffer.push_back(0x00); // CRC
+
+    LXNavigation::Binary::FlightBlockBuffer block_buffer;
+    LXNavigation::Binary::ParseFlightBlock(buffer, block_buffer);
+
+    ok1(std::make_pair(std::end(expected_buffer), std::end(block_buffer)) == std::mismatch(std::begin(expected_buffer), std::end(expected_buffer), std::begin(block_buffer), std::end(block_buffer)));
+  }
+  { // NACK
+    LXNavigation::Binary::FlightBlockBuffer block_buffer(10, 11);
+    LXNavigation::Binary::ParseFlightBlock({0x15}, block_buffer);
+
+    ok1(block_buffer.empty());
+  }
+  { // incorrect CRC
+    LXNavigation::Binary::FlightBlockBuffer buffer(11, 0);
+    buffer[0] = 0x06;
+    buffer[1] = 0x05;
+    LXNavigation::Binary::FlightBlockBuffer block_buffer(11, 11);
+    LXNavigation::Binary::ParseFlightBlock(buffer, block_buffer);
+
+    ok1(block_buffer.empty());
+  }
+  { // size mismatch
+    LXNavigation::Binary::FlightBlockBuffer buffer(7, 0);
+    buffer[0] = 0x06;
+    buffer[1] = 0x0A;
+    buffer[6] = 0x00; //CRC
+    LXNavigation::Binary::FlightBlockBuffer block_buffer(10, 11);
+    LXNavigation::Binary::ParseFlightBlock({0x15}, block_buffer);
+
+    ok1(block_buffer.empty());
+
+    buffer[1] = 0x02;
+    buffer[6] = 0x00; //CRC
+    LXNavigation::Binary::ParseFlightBlock({0x15}, block_buffer);
+    ok1(block_buffer.empty());
+  }
+
+  {
+    LXNavigation::Binary::PacketBuffer buffer;
+    LXNavigation::Binary::GenerateFlightBlockGet(9, 1, buffer);
+    LXNavigation::Binary::PacketBuffer expected_buffer{0x02, 0xF1, 0x09, 0x00, 0x01, 0x00, 0xC8};
+
+    ok1(std::make_pair(std::end(expected_buffer), std::end(buffer)) == std::mismatch(std::begin(expected_buffer), std::end(expected_buffer), std::begin(buffer), std::end(buffer)));
+  }
+  {
+    LXNavigation::Binary::PacketBuffer buffer;
+    LXNavigation::Binary::GenerateFlightInfoGet(1, buffer);
+    LXNavigation::Binary::PacketBuffer expected_buffer{0x02, 0xF0, 0x01, 0x00, 0x3D};
+
+    ok1(std::make_pair(std::end(expected_buffer), std::end(buffer)) == std::mismatch(std::begin(expected_buffer), std::end(expected_buffer), std::begin(buffer), std::end(buffer)));
+  }
+
+  {
+    LXNavigation::Binary::PacketBuffer buffer
+    { 0x06, // ACK
+      0x50, 0x00, //flight id - 80
+      0x31, 0x33, 0x43, 0x4C, 0x51, 0x56, 0x32, 0x32, 0x00, 0x00, //filename 13CLQV22
+      0x96, 0x86, 0x25, 0x00, // date Julian Day
+      0xd1, 0x8e, 0x00, 0x00, // time 14:54:06
+      0xd1, 0x8e, 0x00, 0x00, // landing time 14:54:06
+      0x45, 0x4d, 0x50, 0x54, 0x59, 0x00, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, // pilot name EMPTY
+      0x45, 0x4d, 0x50, 0x54, 0x59, 0x31, 0x00, 0x11, 0x11, 0x11, 0x11, 0x11, // pilot surname EMPTY1
+      0x55, 0x52, 0x2d, 0x56, 0x59, 0x00, 0x11, 0x11, // registration number UR-VYAA
+      0x41, 0x41, 0x00, 0x11, 0x11, 0x11, 0x11, 0x11, // competition ID AA
+      0x0A, // Min G-force 1.0
+      0x20, // Max G-force 3.2
+      0x13, 0x1A, // Max altitude 6675
+      0x90, 0x00, // Max IAS 144
+
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // reserved
+      0xAF, 0x33, 0x00, 0x00, // flight file size - 44851
+      0x00 // CRC
+    };
+    auto flight_info = LXNavigation::Binary::ParseFlightInfo(buffer);
+    ok1(flight_info);
+    ok1(flight_info->filename == "13CLQV22");
+    ok1(flight_info->date == BrokenDate(2021, 03, 12));
+    ok1(flight_info->take_off == BrokenTime(14, 54, 06));
+    ok1(flight_info->landing == BrokenTime(14, 54, 06));
+    ok1(flight_info->pilot_name == "EMPTY");
+    ok1(flight_info->pilot_surname == "EMPTY1");
+    ok1(flight_info->reg_no == "UR-VYAA");
+    ok1(flight_info->comp_id == "AA");
+    ok1(equals(flight_info->min_gforce, 1.0));
+    ok1(equals(flight_info->max_gforce, 3.2));
+    ok1(flight_info->max_alt == 6675);
+    ok1(flight_info->max_ias == 144);
+  }
+
+  {// NACK
+    LXNavigation::Binary::PacketBuffer buffer{ 0x15 };
+    auto flight_info = LXNavigation::Binary::ParseFlightInfo(buffer);
+    ok1(!flight_info);
+  }
+
+  {// incorrect CRC
+    LXNavigation::Binary::PacketBuffer buffer;
+    buffer.resize(92, 0);
+    buffer[0] = 0x06;
+    auto flight_info = LXNavigation::Binary::ParseFlightInfo(buffer);
+    ok1(!flight_info);
+  }
+
+  {// size mismatch
+    LXNavigation::Binary::PacketBuffer buffer(50, 0);
+    buffer[0] = 0x06;
+    auto flight_info = LXNavigation::Binary::ParseFlightInfo(buffer);
+    ok1(!flight_info);
+
+    buffer.resize(99, 0);
+    buffer[0] = 0x06;
+    flight_info = LXNavigation::Binary::ParseFlightInfo(buffer);
+    ok1(!flight_info);
+  }
+}
+
+static void
+TestBinary_Zone()
+{
+}
+
+static void
+TestBinary_Class()
+{
+}
+
+static void
+TestBinary_Radio()
+{
+}
+
 int main(int argc, char **argv)
 {
   plan_tests(131);
@@ -478,5 +707,11 @@ int main(int argc, char **argv)
   TestLXDT_FLIGHTS_NO();
   TestLXDT_FLIGHT_INFO();
 
+  TestBinary_Common();
+  TestBinary_Task();
+  TestBinary_Flight();
+  TestBinary_Zone();
+  TestBinary_Class();
+  TestBinary_Radio();
   return exit_status();
 }

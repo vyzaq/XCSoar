@@ -109,6 +109,17 @@ int GetNumberOfFlights(Port &port, PortNMEAReader &reader,
   return number_of_flights ? *number_of_flights : -1;
 }
 
+bool WaitAndReadAnswer(PortNMEAReader& reader, TimeoutClock timeout)
+{
+  reader.Flush();
+  auto result = reader.ExpectLine(NMEAv2::LXDT_ANS, timeout);
+  if(!result)
+    return false;
+  NMEAInputLine line(result);
+  auto answer = NMEAv2::ParseLXDT_ANS_Status(line);
+  return answer.first;
+}
+
 std::optional<FlightInfo> WaitAndReadFlightInfo(PortNMEAReader& reader, TimeoutClock timeout)
 {
   reader.Flush();
@@ -362,20 +373,42 @@ LXNavigationDevice::ReadFlightList(RecordedFlightList &flight_list, OperationEnv
 {
   port.StopRxThread();
 
+  NMEAv1::PFLX0Request request;
+  request.emplace_back(NMEAv1::FLIGHT_DATA_PARAMETERS, NMEAv1::PFLX0_DISABLED);
+  request.emplace_back(NMEAv1::BASIC_GLIDE_INFO_PARAMETERS, NMEAv1::PFLX0_DISABLED);
+  request.emplace_back(NMEAv1::BASIC_DEVICE_INFO, NMEAv1::PFLX0_DISABLED);
+  request.emplace_back(NMEAv1::ADVANCED_GLIDE_INFO_PARAMETERS, NMEAv1::PFLX0_DISABLED);
+  PortWriteNMEA(port, NMEAv1::GeneratePFLX0(request), env); //quering device info to get logged - debug only
+  PortWriteNMEA(port, "LXDT,SET,BC_INT,ALL,0", env); //quering device info to get logged - debug only
+  port.Drain();
   PortNMEAReader reader(port, env);
+  {
+    TimeoutClock timeout(std::chrono::seconds(5));
+    if(!WaitAndReadAnswer(reader, timeout))
+      return false;
+  }
 
-  TimeoutClock timeout(std::chrono::seconds(5));
-  int flights_quantity = GetNumberOfFlights(port, reader, env, timeout);
-  if (flights_quantity < 0)
-    return false;
+  int flights_quantity = 0;
+  {
+    TimeoutClock timeout(std::chrono::seconds(5));
+    flights_quantity = GetNumberOfFlights(port, reader, env, timeout);
+    if (flights_quantity < 0)
+      return false;
+  }
 
   env.SetProgressRange(flights_quantity);
 
   for(int i = 0; i < flights_quantity; ++i)
   {
+    {
+      TimeoutClock timeout(std::chrono::milliseconds(50));
+      reader.ExpectLine(NMEAv2::LXDT_ANS_FLIGHT_INFO, timeout);
+    }
+
     env.SetProgressPosition(i);
     PortWriteNMEA(port, NMEAv2::GenerateLXDT_FLIGHT_INFO_GET(i+1), env);
     port.Drain();
+    TimeoutClock timeout(std::chrono::seconds(5));
     auto flight_info = WaitAndReadFlightInfo(reader, timeout);
     if(!flight_info)
       return false;
